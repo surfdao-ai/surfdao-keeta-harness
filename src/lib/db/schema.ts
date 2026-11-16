@@ -152,18 +152,33 @@ const FILES = {
 
 type FileKey = (typeof FILES)[keyof typeof FILES]
 
+/* Global in-memory cache. On Vercel the filesystem is read-only, so writes
+   fall back to this per-instance store. Locally, data also persists to disk.
+   For durable production data, swap in Drizzle + Neon (see README). */
+const mem = ((globalThis as Record<string, unknown>).__surfdao_memstore ??=
+  new Map<FileKey, unknown[]>()) as Map<FileKey, unknown[]>
+
 async function readFile<T>(key: FileKey): Promise<T[]> {
+  if (mem.has(key)) return mem.get(key) as T[]
   try {
     const raw = await fs.readFile(path.join(DATA_DIR, key), "utf8")
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw) as T[]
+    mem.set(key, parsed)
+    return parsed
   } catch {
+    mem.set(key, [])
     return []
   }
 }
 
 async function writeFile<T>(key: FileKey, data: T[]) {
-  await fs.mkdir(DATA_DIR, { recursive: true })
-  await fs.writeFile(path.join(DATA_DIR, key), JSON.stringify(data, null, 2))
+  mem.set(key, data)
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true })
+    await fs.writeFile(path.join(DATA_DIR, key), JSON.stringify(data, null, 2))
+  } catch {
+    // Vercel read-only filesystem — the in-memory store keeps the app working.
+  }
 }
 
 export const store = {
