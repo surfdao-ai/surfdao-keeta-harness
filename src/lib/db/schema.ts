@@ -1,0 +1,273 @@
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  jsonb,
+  boolean,
+  serial,
+  numeric,
+} from "drizzle-orm/pg-core"
+
+/* --------------------------------------------------------------------------
+   SurfDAO.ai — Database schema (Drizzle ORM, Postgres/Neon)
+
+   For the MVP the app runs against a zero-config JSON file store (below)
+   that mirrors this schema. To migrate to Postgres/Neon, wire up drizzle-orm
+   + @neondatabase/serverless against this schema and set DATABASE_URL.
+--------------------------------------------------------------------------- */
+
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  keetaAddress: text("keeta_address"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+export const funds = pgTable("funds", {
+  id: varchar("id").primaryKey(),
+  ownerId: varchar("owner_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  slug: text("slug").notNull().unique(),
+  status: text("status", { enum: ["paper", "live", "paused"] }).notNull().default("paper"),
+  mandate: jsonb("mandate").notNull(),
+  riskConfig: jsonb("risk_config").notNull(),
+  inferenceConfig: jsonb("inference_config").notNull(),
+  keetaWalletAddress: text("keeta_wallet_address"),
+  isPublic: boolean("is_public").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+export const fundSessions = pgTable("fund_sessions", {
+  id: varchar("id").primaryKey(),
+  fundId: varchar("fund_id").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  decisions: jsonb("decisions"),
+  checks: jsonb("checks"),
+  actions: jsonb("actions"),
+  nav: numeric("nav", { precision: 18, scale: 2 }).notNull().default("10000"),
+  returnPct: numeric("return_pct", { precision: 10, scale: 4 }),
+  status: text("status").notNull().default("completed"),
+})
+
+export const allocations = pgTable("allocations", {
+  id: varchar("id").primaryKey(),
+  fundId: varchar("fund_id").notNull(),
+  allocatorUserId: varchar("allocator_user_id").notNull(),
+  amountUsdc: numeric("amount_usdc", { precision: 18, scale: 6 }).notNull(),
+  keetaTxHash: text("keeta_tx_hash"),
+  status: text("status", { enum: ["pending", "active", "withdrawn"] }).notNull().default("active"),
+  allocatedAt: timestamp("allocated_at").defaultNow().notNull(),
+})
+
+export const performanceSnapshots = pgTable("performance_snapshots", {
+  id: serial("id").primaryKey(),
+  fundId: varchar("fund_id").notNull(),
+  date: timestamp("date").notNull(),
+  nav: numeric("nav", { precision: 18, scale: 2 }).notNull(),
+  aum: numeric("aum", { precision: 18, scale: 2 }).notNull().default("0"),
+  sharpe: numeric("sharpe", { precision: 10, scale: 4 }),
+  maxDrawdown: numeric("max_drawdown", { precision: 10, scale: 4 }),
+  totalReturn: numeric("total_return", { precision: 10, scale: 4 }),
+})
+
+export const sessions = pgTable("sessions", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+})
+
+/* --------------------------------------------------------------------------
+   Plain application types (mirror the schema, tuned for the JSON store).
+--------------------------------------------------------------------------- */
+
+export type User = {
+  id: string
+  email: string
+  name?: string
+  keetaAddress?: string
+  imageUrl?: string
+  createdAt: string
+}
+export type Fund = {
+  id: string
+  ownerId: string
+  name: string
+  description: string | null
+  slug: string
+  status: "paper" | "live" | "paused"
+  mandate: unknown
+  riskConfig: unknown
+  inferenceConfig: unknown
+  keetaWalletAddress: string | null
+  isPublic: boolean
+  createdAt: string
+}
+export type FundSession = {
+  id: string
+  fundId: string
+  timestamp: string
+  decisions: unknown
+  checks: unknown
+  actions: unknown
+  nav: number
+  returnPct: number | null
+  status: string
+}
+export type Allocation = {
+  id: string
+  fundId: string
+  allocatorUserId: string
+  amountUsdc: number
+  keetaTxHash: string | null
+  status: "pending" | "active" | "withdrawn"
+  allocatedAt: string
+}
+export type Session = {
+  id: string
+  userId: string
+  token: string
+  expiresAt: string
+}
+
+/* --------------------------------------------------------------------------
+   Zero-config JSON file store (MVP). Swap in Drizzle + Neon for production.
+--------------------------------------------------------------------------- */
+
+import fs from "node:fs/promises"
+import path from "node:path"
+
+const DATA_DIR = path.join(process.cwd(), "src/data")
+const FILES = {
+  users: "users.json",
+  funds: "funds.json",
+  sessions: "sessions.json",
+  allocations: "allocations.json",
+  fundSessions: "fundSessions.json",
+} as const
+
+type FileKey = (typeof FILES)[keyof typeof FILES]
+
+async function readFile<T>(key: FileKey): Promise<T[]> {
+  try {
+    const raw = await fs.readFile(path.join(DATA_DIR, key), "utf8")
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+async function writeFile<T>(key: FileKey, data: T[]) {
+  await fs.mkdir(DATA_DIR, { recursive: true })
+  await fs.writeFile(path.join(DATA_DIR, key), JSON.stringify(data, null, 2))
+}
+
+export const store = {
+  users: {
+    list: () => readFile<User>(FILES.users),
+    findByEmail: async (email: string) => {
+      const rows = await store.users.list()
+      return rows.find((r) => r.email === email) ?? null
+    },
+    create: async (user: Omit<User, "id" | "createdAt"> & { id?: string }) => {
+      const rows = await store.users.list()
+      const row: User = {
+        ...user,
+        id: user.id ?? crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      }
+      rows.push(row)
+      await writeFile(FILES.users, rows)
+      return row
+    },
+    updateKeetaAddress: async (id: string, keetaAddress: string) => {
+      const rows = await store.users.list()
+      const idx = rows.findIndex((r) => r.id === id)
+      if (idx === -1) return null
+      rows[idx].keetaAddress = keetaAddress
+      await writeFile(FILES.users, rows)
+      return rows[idx]
+    },
+  },
+  funds: {
+    list: () => readFile<Fund>(FILES.funds),
+    findBySlug: async (slug: string) => {
+      const rows = await store.funds.list()
+      return rows.find((r) => r.slug === slug) ?? null
+    },
+    findByOwner: async (ownerId: string) => {
+      const rows = await store.funds.list()
+      return rows.filter((r) => r.ownerId === ownerId)
+    },
+    create: async (fund: Omit<Fund, "id" | "createdAt"> & { id?: string }) => {
+      const rows = await store.funds.list()
+      const row: Fund = {
+        ...fund,
+        id: fund.id ?? crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      }
+      rows.push(row)
+      await writeFile(FILES.funds, rows)
+      return row
+    },
+  },
+  allocations: {
+    list: () => readFile<Allocation>(FILES.allocations),
+    create: async (allocation: Omit<Allocation, "id" | "allocatedAt">) => {
+      const rows = await store.allocations.list()
+      const row: Allocation = {
+        ...allocation,
+        id: crypto.randomUUID(),
+        allocatedAt: new Date().toISOString(),
+      }
+      rows.push(row)
+      await writeFile(FILES.allocations, rows)
+      return row
+    },
+    byFund: async (fundId: string) => {
+      const rows = await store.allocations.list()
+      return rows.filter((r) => r.fundId === fundId && (r.status === "active" || r.status === "pending"))
+    },
+  },
+  fundSessions: {
+    list: () => readFile<FundSession>(FILES.fundSessions),
+    byFund: async (fundId: string) => {
+      const rows = await store.fundSessions.list()
+      return rows.filter((r) => r.fundId === fundId).sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    },
+    create: async (session: Omit<FundSession, "id" | "timestamp">) => {
+      const rows = await store.fundSessions.list()
+      const row: FundSession = {
+        ...session,
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+      }
+      rows.push(row)
+      await writeFile(FILES.fundSessions, rows)
+      return row
+    },
+  },
+  sessions: {
+    list: () => readFile<Session>(FILES.sessions),
+    findByToken: async (token: string) => {
+      const rows = await store.sessions.list()
+      return rows.find((r) => r.token === token) ?? null
+    },
+    create: async (session: { userId: string; token: string; expiresAt: string }) => {
+      const rows = await store.sessions.list()
+      const row: Session = { ...session, id: crypto.randomUUID() }
+      rows.push(row)
+      await writeFile(FILES.sessions, rows)
+      return row
+    },
+    delete: async (token: string) => {
+      const rows = await store.sessions.list()
+      const filtered = rows.filter((r) => r.token !== token)
+      await writeFile(FILES.sessions, filtered)
+    },
+  },
+}

@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0A2540;
+  --foreground: #F8FAFC;
+  --muted: #1A73E8;
+  --muted-foreground: #F8FAFC;
+  --popover: #0A2540;
+  --popover-foreground: #F8FAFC;
+  --card: #0F345C;
+  --card-foreground: #F8FAFC;
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1A73E8;
+  --secondary-foreground: #FFFFFF;
+  --accent: #FF6B35;
+  --accent-foreground: #FFFFFF;
+  --destructive: #FF6B35;
+  --destructive-foreground: #FFFFFF;
+  --border: #2DD4BF;
+  --input: #2DD4BF;
+  --ring: #3B82F6;
+  --radius: 0.75rem;
+}
+
+/* Surf palette - declared in @theme so Tailwind emits color utilities */
+@theme {
+  --color-ocean-900: #0A2540;
+  --color-ocean-800: #0F345C;
+  --color-wave-blue: #1A73E8;
+  --color-wave-blue-500: #3B82F6;
+  --color-foam: #F8FAFC;
+  --color-sand: #F5E6D3;
+  --color-sunset: #FF6B35;
+  --color-seafoam: #2DD4BF;
+  --color-board-wood: #8B5A2B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius: var(--radius);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Wave background animation */
+.wave-bg {
+  position: relative;
+  overflow: hidden;
+}
+.wave-bg::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  background: radial-gradient(circle at 20% 30%, rgba(59,130,246,0.18) 0%, transparent 55%),
+              radial-gradient(circle at 80% 70%, rgba(45,212,191,0.12) 0%, transparent 50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes wave {
+  0% { transform: translateX(-25%) translateY(0); }
+  50% { transform: translateX(-25%) translateY(-8px); }
+  100% { transform: translateX(-25%) translateY(0); }
+}
+
+.wave-stripe {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 60px;
+  background: url("data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 48 Q16 32 32 48 T64 48 V64 H0 Z' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='4'/%3E%3C/svg%3E") repeat-x;
+  animation: wave 6s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.surfboard-card {
+  position: relative;
+  border-radius: 2rem 2rem 1rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.surfboard-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 2rem 2rem 1rem 1rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 60%);
+  pointer-events: none;
+}

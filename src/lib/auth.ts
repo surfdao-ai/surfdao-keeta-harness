@@ -1,0 +1,58 @@
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { store } from "@/lib/db/schema"
+
+/* --------------------------------------------------------------------------
+   SurfDAO.ai — Dev session auth (zero-config MVP)
+
+   Cookie-based sessions. Good enough to verify the full flow locally and on
+   Vercel preview without provisioning Clerk. Replace with Clerk (per the
+   spec) by swapping this file for Clerk's auth hooks + middleware.
+--------------------------------------------------------------------------- */
+
+const SESSION_COOKIE = "surfdao_session"
+
+export async function getSession() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(SESSION_COOKIE)?.value
+  if (!token) return null
+  const session = await store.sessions.findByToken(token)
+  if (!session) return null
+  if (new Date(session.expiresAt) < new Date()) {
+    await store.sessions.delete(token)
+    return null
+  }
+  const user = await (await store.users.list()).find((u) => u.id === session.userId)
+  if (!user) return null
+  return { user, session }
+}
+
+export async function requireUser() {
+  const session = await getSession()
+  if (!session) redirect("/login")
+  return session
+}
+
+export async function createSession(userId: string) {
+  const token = crypto.randomUUID()
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  await store.sessions.create({ userId, token, expiresAt })
+  const cookieStore = await cookies()
+  cookieStore.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 30,
+  })
+  return token
+}
+
+export async function destroySession() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(SESSION_COOKIE)?.value
+  if (token) {
+    await store.sessions.delete(token)
+    cookieStore.delete(SESSION_COOKIE)
+  }
+}
