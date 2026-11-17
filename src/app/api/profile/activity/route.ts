@@ -8,10 +8,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const userId = session.user.id
 
-  const [allFunds, allAllocations, allSessions] = await Promise.all([
+  const [allFunds, allAllocations, allSessions, allWithdrawals] = await Promise.all([
     store.funds.list(),
     store.allocations.list(),
     store.fundSessions.list(),
+    store.withdrawals.list(),
   ])
 
   const funds = allFunds
@@ -63,5 +64,17 @@ export async function GET() {
       timestamp: s.timestamp,
     }))
 
-  return NextResponse.json({ funds, allocations, activity })
+  const withdrawals = allWithdrawals
+    .filter((w) => w.userId === userId)
+    .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    .map((w) => ({
+      id: w.id,
+      fundName: allFunds.find((f) => f.id === w.fundId)?.name ?? "Unknown fund",
+      amountUsdc: Number(w.amountUsdc),
+      status: w.status,
+      requestedAt: w.requestedAt,
+      txHash: w.txHash,
+    }))
+
+  return NextResponse.json({ funds, allocations, activity, withdrawals })
 }

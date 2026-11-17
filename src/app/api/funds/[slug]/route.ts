@@ -37,11 +37,36 @@ export async function PATCH(
   if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
   if (fund.ownerId !== session.user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 })
   const body = await req.json().catch(() => ({}))
-  const isPublic = body.isPublic === true
-  const updated = await store.funds.update(fund.id, {
-    isPublic,
-    publishedAt: isPublic ? new Date().toISOString() : null,
-  })
+  const updates: Record<string, unknown> = {}
+  if (typeof body.isPublic === "boolean") {
+    updates.isPublic = body.isPublic
+    updates.publishedAt = body.isPublic ? new Date().toISOString() : null
+  }
+  if (typeof body.vaultAddress === "string") {
+    updates.vaultAddress = body.vaultAddress.startsWith("keeta_") ? body.vaultAddress.slice(0, 128) : null
+  }
+  if (typeof body.keetaWalletAddress === "string" || body.keetaWalletAddress === null) {
+    const w = body.keetaWalletAddress
+    updates.keetaWalletAddress = typeof w === "string" && w.startsWith("keeta_") ? w.slice(0, 128) : null
+  }
+  if (body.executionMode === "live" || body.executionMode === "paper") {
+    if (body.executionMode === "live") {
+      const { liveReadiness } = await import("@/lib/live-mode")
+      const candidate = { ...fund, ...updates } as typeof fund
+      const readiness = liveReadiness(candidate)
+      if (!readiness.canEnable) {
+        return NextResponse.json({
+          error: "Live mode prerequisites are not met",
+          checks: readiness.checks,
+        }, { status: 400 })
+      }
+      if (body.acknowledgeRisk !== true) {
+        return NextResponse.json({ error: "You must acknowledge the risks" }, { status: 400 })
+      }
+    }
+    updates.executionMode = body.executionMode
+  }
+  const updated = await store.funds.update(fund.id, updates as any)
   if (!updated) return NextResponse.json({ error: "Update failed" }, { status: 500 })
   const { rememberFund } = await import("@/lib/db/schema")
   await rememberFund(updated)

@@ -38,6 +38,8 @@ export const funds = pgTable("funds", {
   inferenceConfig: jsonb("inference_config").notNull(),
   assets: jsonb("assets").notNull(),
   keetaWalletAddress: text("keeta_wallet_address"),
+  vaultAddress: text("vault_address"),
+  executionMode: text("execution_mode", { enum: ["paper", "live"] }).notNull().default("paper"),
   isPublic: boolean("is_public").notNull().default(false),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -59,6 +61,7 @@ export const allocations = pgTable("allocations", {
   id: varchar("id").primaryKey(),
   fundId: varchar("fund_id").notNull(),
   allocatorUserId: varchar("allocator_user_id").notNull(),
+  allocatorName: text("allocator_name"),
   amountUsdc: numeric("amount_usdc", { precision: 18, scale: 6 }).notNull(),
   keetaTxHash: text("keeta_tx_hash"),
   status: text("status", { enum: ["pending", "active", "withdrawn"] }).notNull().default("active"),
@@ -74,6 +77,19 @@ export const performanceSnapshots = pgTable("performance_snapshots", {
   sharpe: numeric("sharpe", { precision: 10, scale: 4 }),
   maxDrawdown: numeric("max_drawdown", { precision: 10, scale: 4 }),
   totalReturn: numeric("total_return", { precision: 10, scale: 4 }),
+})
+
+export const withdrawals = pgTable("withdrawals", {
+  id: varchar("id").primaryKey(),
+  fundId: varchar("fund_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name"),
+  keetaAddress: text("keeta_address").notNull(),
+  amountUsdc: numeric("amount_usdc", { precision: 18, scale: 6 }).notNull(),
+  status: text("status", { enum: ["pending", "paid", "rejected"] }).notNull().default("pending"),
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+  txHash: text("tx_hash"),
 })
 
 export const sessions = pgTable("sessions", {
@@ -113,6 +129,8 @@ export type Fund = {
   inferenceConfig: unknown
   assets: { symbol: string; name: string; address: string | null; weight: number; color: string }[]
   keetaWalletAddress: string | null
+  vaultAddress?: string | null
+  executionMode: "paper" | "live"
   isPublic: boolean
   publishedAt?: string | null
   createdAt: string
@@ -132,6 +150,7 @@ export type Allocation = {
   id: string
   fundId: string
   allocatorUserId: string
+  allocatorName?: string | null
   amountUsdc: number
   keetaTxHash: string | null
   status: "pending" | "active" | "withdrawn"
@@ -142,6 +161,19 @@ export type Session = {
   userId: string
   token: string
   expiresAt: string
+}
+export type WithdrawalRequest = {
+  id: string
+  fundId: string
+  userId: string
+  userName: string
+  keetaAddress: string
+  amountUsdc: number
+  status: "pending" | "paid" | "rejected"
+  requestedAt: string
+  processedAt?: string | null
+  txHash?: string | null
+  note?: string | null
 }
 
 /* --------------------------------------------------------------------------
@@ -160,6 +192,7 @@ const FILES = {
   sessions: "sessions.json",
   allocations: "allocations.json",
   fundSessions: "fundSessions.json",
+  withdrawals: "withdrawals.json",
 } as const
 
 type FileKey = (typeof FILES)[keyof typeof FILES]
@@ -354,6 +387,14 @@ export const store = {
       const rows = await store.allocations.list()
       return rows.filter((r) => r.fundId === fundId && (r.status === "active" || r.status === "pending"))
     },
+    update: async (id: string, updates: Partial<Allocation>) => {
+      const rows = await readFile<Allocation>(FILES.allocations)
+      const idx = rows.findIndex((r) => r.id === id)
+      if (idx === -1) return null
+      rows[idx] = { ...rows[idx], ...updates }
+      await writeFile(FILES.allocations, rows)
+      return rows[idx]
+    },
   },
   fundSessions: {
     list: async () => {
@@ -377,6 +418,36 @@ export const store = {
       rows.push(row)
       await writeFile(FILES.fundSessions, rows)
       return row
+    },
+  },
+  withdrawals: {
+    list: () => readFile<WithdrawalRequest>(FILES.withdrawals),
+    byUser: async (userId: string) => {
+      const rows = await store.withdrawals.list()
+      return rows.filter((w) => w.userId === userId).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    },
+    byFund: async (fundId: string) => {
+      const rows = await store.withdrawals.list()
+      return rows.filter((w) => w.fundId === fundId).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    },
+    create: async (req: Omit<WithdrawalRequest, "id" | "requestedAt">) => {
+      const rows = await store.withdrawals.list()
+      const row: WithdrawalRequest = {
+        ...req,
+        id: crypto.randomUUID(),
+        requestedAt: new Date().toISOString(),
+      }
+      rows.push(row)
+      await writeFile(FILES.withdrawals, rows)
+      return row
+    },
+    update: async (id: string, updates: Partial<WithdrawalRequest>) => {
+      const rows = await store.withdrawals.list()
+      const idx = rows.findIndex((w) => w.id === id)
+      if (idx === -1) return null
+      rows[idx] = { ...rows[idx], ...updates }
+      await writeFile(FILES.withdrawals, rows)
+      return rows[idx]
     },
   },
   sessions: {

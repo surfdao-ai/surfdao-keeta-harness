@@ -1,11 +1,13 @@
 import Link from "next/link"
-import { ArrowLeft, BookOpen, ShieldAlert, CheckCircle2, Server, Wallet, Landmark, Database, Rocket } from "lucide-react"
+import { ArrowLeft, BookOpen, ShieldAlert, CheckCircle2, XCircle, Server, Wallet, Landmark, Database, Rocket } from "lucide-react"
 import Disclaimer from "@/components/disclaimer"
+import { liveReadiness } from "@/lib/live-mode"
 
 export const dynamic = "force-dynamic"
 
 export default function LiveModePage() {
   const live = process.env.LIVE_MODE === "true"
+  const readiness = liveReadiness(null)
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-foam/80 hover:text-foam">
@@ -42,6 +44,22 @@ export default function LiveModePage() {
             <p className="mt-1 text-sm text-foam/80">The Keeta client signs and sends real transactions, KeeSpecs x402 calls are paid, and allocations are marked active on-chain.</p>
           </div>
         </div>
+      </div>
+
+      <div className="surfboard-card p-6">
+        <h2 className="mb-4 text-lg font-bold text-foam">Server readiness</h2>
+        <div className="space-y-2">
+          {readiness.checks.filter((c) => !c.userAction).map((c) => (
+            <div key={c.key} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm">
+              {c.ok ? <CheckCircle2 className="h-4 w-4 text-seafoam" /> : <XCircle className="h-4 w-4 text-sunset" />}
+              <span className="font-medium text-foam">{c.label}</span>
+              <span className="ml-auto text-xs text-foam/70">{c.detail}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-foam/70">
+          Fund-specific wallet and vault checks appear in each fund&apos;s Live execution panel.
+        </p>
       </div>
 
       <div className="surfboard-card p-6">

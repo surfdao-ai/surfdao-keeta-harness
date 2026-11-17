@@ -16,7 +16,8 @@ import {
 type FundRow = { id: string; name: string; slug: string; status: string; createdAt: string; sessions: number; aum: number; latestReturn: number }
 type AllocationRow = { id: string; fundName: string; fundSlug: string; amountUsdc: number; status: string; allocatedAt: string }
 type ActivityRow = { id: string; fundName: string; fundSlug: string; nav: number; returnPct: number; timestamp: string }
-type ActivityData = { funds: FundRow[]; allocations: AllocationRow[]; activity: ActivityRow[] }
+type WithdrawalRow = { id: string; fundName: string; amountUsdc: number; status: string; requestedAt: string; txHash?: string | null }
+type ActivityData = { funds: FundRow[]; allocations: AllocationRow[]; activity: ActivityRow[]; withdrawals: WithdrawalRow[] }
 
 type Tab = "overview" | "funds" | "allocations" | "activity"
 
@@ -26,7 +27,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [tab, setTab] = React.useState<Tab>("overview")
-  const [data, setData] = React.useState<ActivityData>({ funds: [], allocations: [], activity: [] })
+  const [data, setData] = React.useState<ActivityData>({ funds: [], allocations: [], activity: [], withdrawals: [] })
   const [dataLoading, setDataLoading] = React.useState(true)
   const [form, setForm] = React.useState({
     name: "", bio: "", keetaAddress: "", location: "", website: "", twitter: "",
@@ -256,6 +257,17 @@ export default function ProfilePage() {
                         </div>
                       </Link>
                     )) : <p className="text-sm text-foam/70">No sessions yet. Run an advance on one of your boards.</p>}
+                  </div>
+                )}
+                {tab === "overview" && data.withdrawals.length > 0 && (
+                  <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
+                    <h3 className="text-sm font-bold text-foam">Withdrawal requests</h3>
+                    {data.withdrawals.map((w) => (
+                      <div key={w.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm">
+                        <div><div className="text-foam">{w.fundName}</div><div className="text-xs text-foam/70">{new Date(w.requestedAt).toLocaleString()} · <span className="capitalize">{w.status}</span></div></div>
+                        <div className="font-semibold text-foam">${w.amountUsdc.toFixed(2)}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>

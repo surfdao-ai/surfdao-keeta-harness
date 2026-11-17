@@ -69,6 +69,8 @@ export async function POST(req: Request) {
     inferenceConfig: inference.config,
     assets,
     keetaWalletAddress,
+    vaultAddress: null,
+    executionMode: "paper",
     isPublic: publish,
     publishedAt: publish ? new Date().toISOString() : null,
   })

@@ -19,6 +19,9 @@ export async function POST(
   if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
   if (fund.ownerId !== session.user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 })
   if (fund.status === "paused") return NextResponse.json({ error: "Fund is paused" }, { status: 400 })
+  if (fund.executionMode === "live" && process.env.LIVE_MODE !== "true") {
+    return NextResponse.json({ error: "Fund requests live execution but the server flag is off" }, { status: 400 })
+  }
 
   const assets: Fund["assets"] =
     fund.assets?.length ? fund.assets : CURATED_ASSETS.slice(0, 2).map((a) => ({

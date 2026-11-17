@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
   let txHash: string | undefined
   let onChain = false
-  if (process.env.LIVE_MODE === "true") {
+  if (process.env.LIVE_MODE === "true" && fund.executionMode === "live") {
     const sent = await sendToken({
       fromAddress: session.user.keetaAddress || "demo",
       toAddress: fund.keetaWalletAddress || "demo",
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
   const allocation = await store.allocations.create({
     fundId: fund.id,
     allocatorUserId: session.user.id,
+    allocatorName: session.user.name || session.user.email,
     amountUsdc: amount,
     keetaTxHash: txHash ?? null,
     status: onChain ? "active" : "pending",

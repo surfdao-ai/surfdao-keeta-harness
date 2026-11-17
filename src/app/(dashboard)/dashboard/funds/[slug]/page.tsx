@@ -4,6 +4,8 @@ import { store } from "@/lib/db/schema"
 import { fundStats } from "@/lib/fund-helpers"
 import { getPersona } from "@/lib/agents/personas"
 import FundActions from "@/components/fund-actions"
+import LiveModeControl from "@/components/live-mode-control"
+import VaultPanel from "@/components/vault-panel"
 import { WaveChart } from "@/components/wave-chart"
 import Disclaimer from "@/components/disclaimer"
 import { Badge } from "@/components/ui/badge"
@@ -52,10 +54,22 @@ export default async function FundDetailPage({
             <Badge variant={fund.isPublic ? "success" : "warning"}>
               {fund.isPublic ? "PUBLISHED" : "DRAFT"}
             </Badge>
+            <Badge variant={fund.executionMode === "live" ? "destructive" : "default"}>
+              {fund.executionMode === "live" ? "LIVE" : "PAPER"}
+            </Badge>
           </div>
           <p className="text-foam/80 max-w-2xl">{fund.description}</p>
         </div>
-        <FundActions slug={fund.slug} fundName={fund.name} owner={!!isOwner} isPublic={!!fund.isPublic} />
+        <div className="flex flex-col items-start gap-3">
+          <FundActions slug={fund.slug} fundName={fund.name} owner={!!isOwner} isPublic={!!fund.isPublic} />
+          <LiveModeControl
+            slug={fund.slug}
+            owner={!!isOwner}
+            mode={fund.executionMode ?? "paper"}
+            wallet={fund.keetaWalletAddress}
+            vault={fund.vaultAddress}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -239,6 +253,7 @@ export default async function FundDetailPage({
               .map((a) => {
                 const allocator = userById.get(a.allocatorUserId)
                 const isMine = session?.user.id === a.allocatorUserId
+                const displayName = a.allocatorName ?? allocator?.name ?? (isMine ? session?.user.name : null) ?? "Unknown surfer"
                 return (
                   <div key={a.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                     <div className="flex min-w-0 items-center gap-3">
@@ -247,7 +262,7 @@ export default async function FundDetailPage({
                       </div>
                       <div className="min-w-0">
                         <div className="truncate font-medium text-foam">
-                          {allocator?.name ?? "Unknown surfer"} {isMine && <span className="text-seafoam">(you)</span>}
+                          {displayName} {isMine && <span className="text-seafoam">(you)</span>}
                         </div>
                         <div className="text-xs text-foam/70">
                           {new Date(a.allocatedAt).toLocaleString()} · {a.keetaTxHash ? "on-chain" : "paper"}
@@ -267,6 +282,18 @@ export default async function FundDetailPage({
             No allocations yet. Be the first to drop into this board.
           </p>
         )}
+      </div>
+
+      <div className="surfboard-card p-6">
+        <h2 className="mb-4 text-lg font-bold text-foam">On-chain vault &amp; withdrawals</h2>
+        <VaultPanel
+          slug={fund.slug}
+          owner={!!isOwner}
+          canWithdraw={!!session && !isOwner}
+          withdrawable={allocations
+            .filter((a) => a.allocatorUserId === session?.user.id)
+            .reduce((s, a) => s + Number(a.amountUsdc), 0)}
+        />
       </div>
 
       <Disclaimer />

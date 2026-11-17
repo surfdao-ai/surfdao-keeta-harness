@@ -201,6 +201,36 @@ protection enabled — ask the owner for access). Source:
 
 ---
 
+## On-chain vault model (researched from docs.keeta.com)
+
+Keeta has no smart contracts, so fund custody uses **storage accounts + ACL permissions**,
+not code-enforced vault logic. The implemented model (`lib/keeta/vault.ts`):
+
+- **Vault creation** — the platform keeper (server signer from `KEETA_KEEPER_SEED`) creates a
+  `STORAGE` account per fund. Default permission is `STORAGE_DEPOSIT` (anyone can deposit);
+  `STORAGE_CAN_HOLD` is granted **only for the Keeta USDC token** (single-token vault).
+- **Rug-pull protection** — the **keeper owns the storage account**, not the fund creator.
+  The creator is never given OWNER or SEND_ON_BEHALF, so they cannot withdraw allocator funds.
+  Per Keeta docs, a storage owner can still change ACLs later, so this is a policy/custodial
+  guarantee, not an immutable on-chain one — disclosed to users in the UI.
+- **Allocation verification** — allocators send USDC to the displayed vault address. The keeper
+  (`POST /api/keeper/run`, hourly via Vercel Cron) scans the vault chain for `RECEIVE` events,
+  matches the sender to a profile's `keetaAddress`, and credits the allocation with the on-chain
+  tx hash. The address is linkable to KeetaScan for independent verification.
+- **Withdrawals** — allocators request a withdrawal (amount + destination); the keeper pays it
+  from the vault after a **24-hour timelock**, then marks matching allocations withdrawn.
+- **Access control** — the keeper endpoint requires `KEEPER_SECRET` (header) or Vercel's
+  `CRON_SECRET` (Bearer). No private keys are stored in the app; the seed lives only in env.
+
+Required env for live execution: `LIVE_MODE=true`, `KEETA_NETWORK`, `KEETA_KEEPER_SEED`,
+`KEEPER_SECRET`, `CRON_SECRET`, `X402_GATEWAY`, `X402_TOKEN`, `DATABASE_URL`.
+The UI's per-fund **Live execution** panel shows a real readiness checklist and requires an
+explicit risk acknowledgment before enabling live mode. `Enable live` is disabled until every
+server-side prerequisite passes.
+
+> This is custodial and experimental. A professionally audited vault and a funded keeper wallet
+> are external prerequisites; this code does not claim to provide either.
+
 ## Data accuracy
 
 - **NAV** starts at 10,000 + capital allocated since the last session; each advance applies
