@@ -100,7 +100,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      <div className="relative ml-16 flex-1 lg:ml-60">
+      <div className="relative ml-16 min-w-0 flex-1 lg:ml-60">
         <div className="sticky top-0 z-10 border-b border-white/5 bg-ocean-900/80 backdrop-blur">
           <div className="flex h-14 items-center justify-between px-4 lg:px-6">
             <div className="hidden items-center gap-4 lg:flex">
@@ -112,12 +112,6 @@ export default function DashboardLayout({
               <Link href="/dashboard/leaderboard" className="hidden text-xs font-medium text-foam/90 underline-offset-4 transition hover:text-foam sm:inline">
                 Public Leaderboard
               </Link>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 text-xs font-medium text-red-400 transition hover:text-red-300 lg:hidden"
-              >
-                <LogOut className="h-4 w-4" /> Sign out
-              </button>
             </div>
           </div>
         </div>

@@ -99,7 +99,7 @@ export default function ProfilePage() {
   const myAum = data.funds.reduce((s, f) => s + f.aum, 0)
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto min-w-0 max-w-4xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foam">Your profile</h1>
@@ -129,11 +129,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat icon={<Flag className="h-5 w-5" />} label="Funds created" value={data.funds.length} />
-        <Stat icon={<Droplets className="h-5 w-5" />} label="Allocations" value={data.allocations.length} />
+      <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-4">
+        <Stat icon={<Flag className="h-5 w-5" />} label="Funds" value={data.funds.length} />
+        <Stat icon={<Droplets className="h-5 w-5" />} label="Drops" value={data.allocations.length} />
         <Stat icon={<Activity className="h-5 w-5" />} label="Sessions" value={data.activity.length} />
-        <Stat icon={<TrendingUp className="h-5 w-5" />} label="AUM attracted" value={`$${myAum.toLocaleString()}`} />
+        <Stat icon={<TrendingUp className="h-5 w-5" />} label="AUM" value={`$${myAum.toLocaleString()}`} />
       </div>
 
       {editing ? (
@@ -215,11 +215,11 @@ export default function ProfilePage() {
                     <h2 className="text-lg font-bold text-foam">Funds you created</h2>
                     {data.funds.length ? data.funds.map((f) => (
                       <Link key={f.id} href={`/dashboard/funds/${f.slug}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition hover:border-seafoam/40 hover:bg-white/5">
-                        <div>
-                          <div className="font-semibold text-foam">{f.name}</div>
-                          <div className="text-xs text-foam/70">{f.sessions} sessions · created {new Date(f.createdAt).toLocaleDateString()}</div>
+                        <div className="min-w-0 pr-3">
+                          <div className="truncate font-semibold text-foam">{f.name}</div>
+                          <div className="truncate text-xs text-foam/70">{f.sessions} sessions · created {new Date(f.createdAt).toLocaleDateString()}</div>
                         </div>
-                        <div className="text-right">
+                        <div className="shrink-0 text-right">
                           <div className="text-sm font-bold text-seafoam">${f.aum.toLocaleString()}</div>
                           <div className={`text-xs ${f.latestReturn >= 0 ? "text-seafoam" : "text-red-400"}`}>{f.latestReturn >= 0 ? "+" : ""}{f.latestReturn.toFixed(2)}%</div>
                         </div>
@@ -232,11 +232,11 @@ export default function ProfilePage() {
                     <h2 className="text-lg font-bold text-foam">Your allocations</h2>
                     {data.allocations.length ? data.allocations.map((a) => (
                       <Link key={a.id} href={`/dashboard/funds/${a.fundSlug}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition hover:border-seafoam/40 hover:bg-white/5">
-                        <div>
-                          <div className="font-semibold text-foam">{a.fundName}</div>
-                          <div className="text-xs text-foam/70">{new Date(a.allocatedAt).toLocaleString()} · <span className="capitalize">{a.status}</span></div>
+                        <div className="min-w-0 pr-3">
+                          <div className="truncate font-semibold text-foam">{a.fundName}</div>
+                          <div className="truncate text-xs text-foam/70">{new Date(a.allocatedAt).toLocaleString()} · <span className="capitalize">{a.status}</span></div>
                         </div>
-                        <div className="text-sm font-bold text-seafoam">${a.amountUsdc.toLocaleString()}</div>
+                        <div className="shrink-0 text-sm font-bold text-seafoam">${a.amountUsdc.toLocaleString()}</div>
                       </Link>
                     )) : <p className="text-sm text-foam/70">No allocations yet. <Link href="/dashboard/allocate" className="text-wave-blue underline">Explore funds.</Link></p>}
                   </div>
@@ -246,11 +246,11 @@ export default function ProfilePage() {
                     <h2 className="text-lg font-bold text-foam">Paper-trading sessions</h2>
                     {data.activity.length ? data.activity.map((s) => (
                       <Link key={s.id} href={`/dashboard/funds/${s.fundSlug}`} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-4 transition hover:border-seafoam/40 hover:bg-white/5">
-                        <div>
-                          <div className="font-semibold text-foam">{s.fundName}</div>
-                          <div className="text-xs text-foam/70">{new Date(s.timestamp).toLocaleString()}</div>
+                        <div className="min-w-0 pr-3">
+                          <div className="truncate font-semibold text-foam">{s.fundName}</div>
+                          <div className="truncate text-xs text-foam/70">{new Date(s.timestamp).toLocaleString()}</div>
                         </div>
-                        <div className="text-right">
+                        <div className="shrink-0 text-right">
                           <div className="text-sm font-bold text-foam">${s.nav.toLocaleString()}</div>
                           <div className={`text-xs ${s.returnPct >= 0 ? "text-seafoam" : "text-red-400"}`}>{s.returnPct >= 0 ? "+" : ""}{s.returnPct.toFixed(2)}%</div>
                         </div>
@@ -269,9 +269,9 @@ export default function ProfilePage() {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string | number }) {
   return (
-    <div className="surfboard-card p-4">
-      <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-foam/70">{icon}{label}</div>
-      <div className="text-xl font-bold text-foam">{value}</div>
+    <div className="surfboard-card min-w-0 p-4">
+      <div className="mb-2 flex min-w-0 items-center gap-2 truncate text-xs font-medium uppercase tracking-wider text-foam/70">{icon}<span className="truncate">{label}</span></div>
+      <div className="truncate text-lg font-bold text-foam sm:text-xl">{value}</div>
     </div>
   )
 }

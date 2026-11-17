@@ -25,6 +25,34 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      <div className="surfboard-card p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-seafoam/15 text-seafoam">
+              <Waves className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-foam">Execution mode</h2>
+                <span className="rounded-full border border-sunset/40 bg-sunset/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sunset">
+                  {process.env.LIVE_MODE === "true" ? "Live" : "Paper"}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-foam/80">
+                {process.env.LIVE_MODE === "true"
+                  ? "Live Keeta execution is enabled. Verify your wallet and vault before allocating."
+                  : "All funds, agents, NAV, and allocations are simulated. No real funds move."}
+              </p>
+            </div>
+          </div>
+          <div className="text-xs text-foam/70 sm:max-w-sm sm:text-right">
+            To go live: set <code className="rounded bg-white/10 px-1">LIVE_MODE=true</code>, connect a
+            funded Keeta wallet, deploy an audited vault, and set <code className="rounded bg-white/10 px-1">COOKIE_SECRET</code>.
+            See the README.
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard title="Funds" value={userFunds.length} icon={<Flag className="h-5 w-5" />} color="text-wave-blue" />
         <StatCard title="Total AUM" value={`$${totalAUM.toLocaleString()}`} icon={<DollarSign className="h-5 w-5" />} color="text-seafoam" />

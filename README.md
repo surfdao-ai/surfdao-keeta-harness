@@ -75,9 +75,47 @@ Copy `.env.example` to `.env.local` to customize. **None are required for paper 
 | `X402_GATEWAY` | KeeSpecs x402 gateway base URL | (simulated) |
 | `X402_TOKEN` | Paid x402 access token | (simulated) |
 | `DATABASE_URL` | Neon/Postgres connection for production store | (JSON file) |
+| `COOKIE_SECRET` | HMAC secret for signed cookies (set in production) | dev fallback |
 
 The Keeta mainnet USDC token used is:
 `keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna`
+
+## How to initiate LIVE mode (real Keeta mainnet execution)
+
+Live mode is **off by default and intentionally gated**. The agent inference
+dropdown in the fund wizard only chooses the LLM used for reasoning — it never
+enables live trading. To actually send real value:
+
+1. **Set the environment variable** on the server that runs the app:
+   ```bash
+   # Vercel
+   vercel env add LIVE_MODE production   # value: true
+
+   # Local / self-hosted (.env.local)
+   LIVE_MODE=true
+   ```
+   Also set a strong `COOKIE_SECRET` (Vercel: `vercel env add COOKIE_SECRET production`).
+
+2. **Fund a Keeta wallet** and set each fund's `keetaWalletAddress` to an address
+   you control. The server-side Keeta client signs sends with its own runtime
+   signer in this MVP — replace `lib/keeta/client.ts` `sendToken()` with
+   user-authorized signing (e.g. WalletConnect / Anchor) before holding real funds.
+
+3. **Deploy and audit an on-chain vault/contract.** Fund-specific deposit
+   addresses should be vault accounts with owner-controlled ACLs, not arbitrary
+   wallet addresses. KeeSpecs x402 checks should be configured with a real
+   `X402_GATEWAY` + `X402_TOKEN`.
+
+4. **Swap the simulated NAV engine.** In
+   `app/api/funds/[slug]/advance/route.ts`, replace the score-derived NAV change
+   with real execution results, then persist via Drizzle + Neon (`DATABASE_URL`)
+   instead of the JSON/cookie store.
+
+5. **Redeploy** (`vercel --prod`) and confirm the dashboard banner reads **LIVE**.
+
+> ⚠️ Until steps 2–5 are done, do not enable `LIVE_MODE`. Enabling the flag alone
+> does not make the current MVP safe for real capital — it only switches the
+> client from simulated `txHash` values to real `sendToken()` calls.
 
 ---
 
