@@ -10,5 +10,17 @@
     "name": "polish2",
     "id": "05b74971-a101-49d6-94ab-4e49560e6db7",
     "createdAt": "2026-11-17T00:32:51.098Z"
+  },
+  {
+    "email": "bug-check@surfdao.ai",
+    "name": "bug-check",
+    "id": "7b1e397c-8834-44e8-b412-8a0c2fbcb94e",
+    "createdAt": "2026-11-17T00:46:59.379Z"
+  },
+  {
+    "email": "cookiefix@surfdao.ai",
+    "name": "cookiefix",
+    "id": "f9daf104-e34b-460c-b3ee-e66f8edfbd8e",
+    "createdAt": "2026-11-17T00:55:18.930Z"
   }
 ]

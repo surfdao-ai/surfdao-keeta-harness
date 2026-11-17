@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireUser } from "@/lib/auth"
-import { store } from "@/lib/db/schema"
+import { store, rememberAllocation } from "@/lib/db/schema"
 import { runSafetyChecks } from "@/lib/keespecs/client"
 import { sendToken } from "@/lib/keeta/client"
 
@@ -55,5 +55,6 @@ export async function POST(req: Request) {
     status: onChain ? "active" : "pending",
   })
 
+  await rememberAllocation(allocation)
   return NextResponse.json({ allocation, checks, onChain, simulated: !onChain })
 }

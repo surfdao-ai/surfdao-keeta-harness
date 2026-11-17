@@ -140,6 +140,7 @@ export type Session = {
 
 import fs from "node:fs/promises"
 import path from "node:path"
+import { cookies } from "next/headers"
 
 const DATA_DIR = path.join(process.cwd(), "src/data")
 const FILES = {
@@ -181,6 +182,57 @@ async function writeFile<T>(key: FileKey, data: T[]) {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Per-browser cookie cache. On Vercel each request can hit a different lambda
+   with its own in-memory store. Persisting just-created records in a cookie
+   makes the create → detail-page hop reliable for the creator.
+--------------------------------------------------------------------------- */
+
+const FUND_COOKIE = "surfdao_funds"
+const ALLOC_COOKIE = "surfdao_allocs"
+const SESSION_COOKIE = "surfdao_sessions"
+
+async function readCookie<T>(name: string): Promise<T[]> {
+  try {
+    const jar = await cookies()
+    const raw = jar.get(name)?.value
+    if (!raw) return []
+    const parsed = JSON.parse(decodeURIComponent(raw))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+async function writeCookie<T>(name: string, rows: T[]) {
+  try {
+    const jar = await cookies()
+    jar.set(name, encodeURIComponent(JSON.stringify(rows.slice(0, 4))), {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    })
+  } catch {
+    // called outside a request context — ignore
+  }
+}
+
+export async function rememberFund(fund: Fund) {
+  const rows = await readCookie<Fund>(FUND_COOKIE)
+  await writeCookie(FUND_COOKIE, [fund, ...rows.filter((f) => f.id !== fund.id)])
+}
+
+export async function rememberAllocation(allocation: Allocation) {
+  const rows = await readCookie<Allocation>(ALLOC_COOKIE)
+  await writeCookie(ALLOC_COOKIE, [allocation, ...rows.filter((a) => a.id !== allocation.id)])
+}
+
+export async function rememberSession(session: FundSession) {
+  const rows = await readCookie<FundSession>(SESSION_COOKIE)
+  await writeCookie(SESSION_COOKIE, [session, ...rows.filter((s) => s.id !== session.id)])
+}
+
 export const store = {
   users: {
     list: () => readFile<User>(FILES.users),
@@ -209,7 +261,12 @@ export const store = {
     },
   },
   funds: {
-    list: () => readFile<Fund>(FILES.funds),
+    list: async () => {
+      const disk = await readFile<Fund>(FILES.funds)
+      const cookieFunds = await readCookie<Fund>(FUND_COOKIE)
+      const ids = new Set(disk.map((f) => f.id))
+      return [...cookieFunds.filter((f) => !ids.has(f.id)), ...disk]
+    },
     findBySlug: async (slug: string) => {
       const rows = await store.funds.list()
       return rows.find((r) => r.slug === slug) ?? null
@@ -231,7 +288,12 @@ export const store = {
     },
   },
   allocations: {
-    list: () => readFile<Allocation>(FILES.allocations),
+    list: async () => {
+      const disk = await readFile<Allocation>(FILES.allocations)
+      const cookieAllocs = await readCookie<Allocation>(ALLOC_COOKIE)
+      const ids = new Set(disk.map((a) => a.id))
+      return [...cookieAllocs.filter((a) => !ids.has(a.id)), ...disk]
+    },
     create: async (allocation: Omit<Allocation, "id" | "allocatedAt">) => {
       const rows = await store.allocations.list()
       const row: Allocation = {
@@ -249,7 +311,12 @@ export const store = {
     },
   },
   fundSessions: {
-    list: () => readFile<FundSession>(FILES.fundSessions),
+    list: async () => {
+      const disk = await readFile<FundSession>(FILES.fundSessions)
+      const cookieSessions = await readCookie<FundSession>(SESSION_COOKIE)
+      const ids = new Set(disk.map((s) => s.id))
+      return [...cookieSessions.filter((s) => !ids.has(s.id)), ...disk]
+    },
     byFund: async (fundId: string) => {
       const rows = await store.fundSessions.list()
       return rows.filter((r) => r.fundId === fundId).sort((a, b) => b.timestamp.localeCompare(a.timestamp))

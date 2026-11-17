@@ -139,5 +139,99 @@
     "isPublic": true,
     "id": "c2de2efd-9bdb-4585-a686-ae40777ee589",
     "createdAt": "2026-11-17T00:33:43.462Z"
+  },
+  {
+    "ownerId": "7b1e397c-8834-44e8-b412-8a0c2fbcb94e",
+    "name": "Bug Check Fund",
+    "description": "",
+    "slug": "bug-check-fund",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper"
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "5d60e50c-e691-4786-b084-cd2ba950f62a",
+    "createdAt": "2026-11-17T00:47:17.048Z"
+  },
+  {
+    "ownerId": "f9daf104-e34b-460c-b3ee-e66f8edfbd8e",
+    "name": "Cookie Fix Fund",
+    "description": "",
+    "slug": "cookie-fix-fund",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper"
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "4d0f3ece-af9a-4afa-bfc3-1a886b6d5b05",
+    "createdAt": "2026-11-17T00:55:41.840Z"
   }
 ]

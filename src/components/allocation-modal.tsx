@@ -60,15 +60,17 @@ export default function AllocationModal({
             <div className="space-y-2">
               <label className="text-sm font-medium text-foam">Amount (USDC)</label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-foam/70">USDC</span>
                 <Input
                   type="number"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="pl-8"
+                  className="pr-16 text-lg font-semibold"
                   disabled={loading}
                 />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-foam/70">
+                  USDC
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-foam/70 mb-1">

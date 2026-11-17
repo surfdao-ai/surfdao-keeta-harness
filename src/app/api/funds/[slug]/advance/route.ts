@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireUser } from "@/lib/auth"
-import { store } from "@/lib/db/schema"
+import { store, rememberSession } from "@/lib/db/schema"
 import { orchestrate } from "@/lib/agents/orchestrator"
 import { runSafetyChecks } from "@/lib/keespecs/client"
 import { getBalances } from "@/lib/keeta/client"
@@ -48,7 +48,7 @@ export async function POST(
   const returnPct = (score - 50) / 200
   const nav = prevNavNum * (1 + returnPct)
 
-  await store.fundSessions.create({
+  const createdSession = await store.fundSessions.create({
     fundId: fund.id,
     decisions: { weights: result.weights, votes: result.votes },
     checks,
@@ -57,6 +57,7 @@ export async function POST(
     returnPct: Math.round(returnPct * 10000) / 100,
     status: "completed",
   })
+  await rememberSession(createdSession)
 
   return NextResponse.json({
     ok: true,

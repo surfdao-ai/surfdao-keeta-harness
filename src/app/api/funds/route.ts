@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { requireUser } from "@/lib/auth"
-import { store } from "@/lib/db/schema"
+import { store, rememberFund } from "@/lib/db/schema"
 import { DEFAULT_MANDATE, DEFAULT_RISK_CONFIG, DEFAULT_INFERENCE_CONFIG } from "@/lib/agents/personas"
 
 export async function GET(req: Request) {
@@ -35,5 +35,6 @@ export async function POST(req: Request) {
     keetaWalletAddress: keetaWalletAddress ?? null,
     isPublic: true,
   })
+  await rememberFund(fund)
   return NextResponse.json({ fund }, { status: 201 })
 }
