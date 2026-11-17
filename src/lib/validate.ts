@@ -19,6 +19,26 @@ export function safeJson<T>(value: unknown, fallback: T, maxBytes = 4096): T {
   }
 }
 
+/** SSRF guard: only https URLs on public hosts may be used as inference endpoints. */
+export function isSafeEndpoint(raw: unknown): raw is string {
+  if (typeof raw !== "string" || raw.length > 500) return false
+  try {
+    const url = new URL(raw)
+    if (url.protocol !== "https:") return false
+    const host = url.hostname.toLowerCase()
+    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return false
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
+      const p = host.split(".").map(Number)
+      if (p[0] === 10 || p[0] === 127 || p[0] === 0 || (p[0] === 169 && p[1] === 254) ||
+          (p[0] === 172 && p[1] >= 16 && p[1] <= 31) || (p[0] === 192 && p[1] === 168)) return false
+    }
+    if (host === "metadata.google.internal") return false
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Reject cross-site form/fetch submissions (SameSite cookies are the main defense). */
 export function assertSameOrigin(req: Request): boolean {
   const origin = req.headers.get("origin")

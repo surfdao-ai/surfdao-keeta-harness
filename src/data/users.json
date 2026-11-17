@@ -64,5 +64,19 @@
     "passwordHash": "486253e281ce2d8c869196ed059ce047:c0e10617690531a2ba0a459efeecfb8516af634da35bbb9eb5835280042086b455fc1a0e5e5bf94a131beac8db25d0ead79c0565d002e24638ed06ecda5c0cfc",
     "id": "4498bee7-1212-4d45-b1bf-0995290aaedf",
     "createdAt": "2026-11-17T12:03:12.286Z"
+  },
+  {
+    "email": "assets@surfdao.ai",
+    "name": "Asset Manager",
+    "passwordHash": "fedf65bd3113afb2efa0895be398e1ed:66178cecd2f08cf9d1605d431df657faf6add045f4c8b96b6f9fac054140cbd651d0f2404def362db8e1c00266f980643f3ac663f078494b9c3929c5c90c6f23",
+    "id": "0953f064-063c-45a9-8885-54b73bf409f3",
+    "createdAt": "2026-11-17T12:44:08.022Z"
+  },
+  {
+    "email": "leakcheck@surfdao.ai",
+    "name": "leakcheck",
+    "passwordHash": "11efc89b9c6a51fcc002b22c33499124:0650e3806e263e01b3a5f500bc15bfe8e977c9bf235f16ff4ffa8278222de32a8099f2b2a67f2beafe6588c14d02b82e226b9120ec4292e850a8f8a27e7dffae",
+    "id": "8a0bb065-0742-4169-ad91-c511e64fd09c",
+    "createdAt": "2026-11-17T12:47:44.978Z"
   }
 ]

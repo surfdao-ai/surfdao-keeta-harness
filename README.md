@@ -76,6 +76,7 @@ Copy `.env.example` to `.env.local` to customize. **None are required for paper 
 | `X402_TOKEN` | Paid x402 access token | (simulated) |
 | `DATABASE_URL` | Neon/Postgres connection for production store | (JSON file) |
 | `COOKIE_SECRET` | HMAC secret for signed cookies (set in production) | dev fallback |
+| `INFERENCE_SECRET` | AES-GCM secret for user API keys (set in production) | `COOKIE_SECRET` |
 
 The Keeta mainnet USDC token used is:
 `keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna`
@@ -116,6 +117,33 @@ enables live trading. To actually send real value:
 > ⚠️ Until steps 2–5 are done, do not enable `LIVE_MODE`. Enabling the flag alone
 > does not make the current MVP safe for real capital — it only switches the
 > client from simulated `txHash` values to real `sendToken()` calls.
+
+---
+
+## Fund manager workflow (end to end)
+
+1. **Create the harness** — **Identity** (name, description, optional Keeta wallet) →
+   **Agents** (strategy-style crew, weights capped at 100%) → **Assets** (pick from the
+   live Keeta/KeeSpecs universe — USDC, KTA, EURC, fiat-backed tokens, CBBTC — with weights
+   capped at 100%) → **Harness** (risk limits + inference provider) → **Publish**.
+2. **Bring your own inference** — select OpenAI/Anthropic-compatible and enter an endpoint,
+   API key, and model. The endpoint is SSRF-checked (https + public hosts only) and the key
+   is AES-256-GCM encrypted server-side; keys are never returned to the browser. If the
+   external call fails, the harness falls back to the deterministic paper simulator so the
+   loop never breaks.
+3. **Publish or keep as draft** — drafts are hidden from the public leaderboard and from
+   allocations. The owner can Publish/Unpublish any time from the fund page; visibility is
+   also patchable via `PATCH /api/funds/[slug]`.
+4. **Run advances** — each paper session builds a market snapshot from the fund's own assets,
+   runs the agent crew, produces target weights per asset, runs KeeSpecs checks, and logs
+   NAV + theses + holdings. The fund page shows the asset universe, target weights, performance
+   wave, thesis feed, and recent sessions.
+5. **Allocate** — published funds appear on the leaderboard and in Allocate; any signed-in
+   user can drop in USDC. Allocations appear on the fund page and in the allocator's profile.
+6. **Profile** — review funds created, allocations made, and session history; edit profile.
+
+Asset discovery lives in `lib/assets/keeta-assets.ts` (`GET /api/assets`), with a curated
+fallback when KeeSpecs is unreachable.
 
 ---
 

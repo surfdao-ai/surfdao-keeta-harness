@@ -42,10 +42,13 @@ export default async function FundDetailPage({
             <Badge variant={fund.status === "live" ? "success" : "default"}>
               {fund.status.toUpperCase()}
             </Badge>
+            <Badge variant={fund.isPublic ? "success" : "warning"}>
+              {fund.isPublic ? "PUBLISHED" : "DRAFT"}
+            </Badge>
           </div>
           <p className="text-foam/80 max-w-2xl">{fund.description}</p>
         </div>
-        <FundActions slug={fund.slug} fundName={fund.name} owner={!!isOwner} />
+        <FundActions slug={fund.slug} fundName={fund.name} owner={!!isOwner} isPublic={!!fund.isPublic} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -72,6 +75,52 @@ export default async function FundDetailPage({
           <div className="text-2xl font-bold text-foam">{allocations.length}</div>
           <div className="text-sm text-foam/70 mt-1">community backers</div>
         </div>
+      </div>
+
+      <div className="surfboard-card p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-foam">Asset universe</h2>
+          <span className="text-xs text-foam/70">
+            Harness: {((fund.inferenceConfig as any)?.provider ?? "simulated") === "simulated" ? "Paper simulator" : "Your inference API"}
+          </span>
+        </div>
+        {((fund.assets ?? []) as any[]).length ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              {((fund.assets ?? []) as any[]).map((a) => {
+                const target = (latest?.decisions as any)?.assetWeights?.[a.symbol]
+                return (
+                  <div key={a.symbol} className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 font-semibold text-foam">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
+                        {a.symbol} <span className="font-normal text-foam/70">{a.name}</span>
+                      </span>
+                      <span className="text-foam/80">{target != null ? `${target}%` : `${a.weight}%`}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full rounded-full" style={{ width: `${target ?? a.weight}%`, background: a.color }} />
+                    </div>
+                    <div className="mt-1.5 text-[10px] text-foam/60">
+                      {a.address ? `${a.address.slice(0, 12)}…` : "Base asset"}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-center rounded-xl border border-white/10 bg-ocean-900/30 p-4">
+              <div className="w-full space-y-2">
+                <div className="text-xs font-medium uppercase tracking-wider text-foam/70">Harness config</div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Agents</span><span className="text-foam">{((fund.mandate as any)?.agents ?? []).length}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Provider</span><span className="text-foam">{(fund.inferenceConfig as any)?.provider ?? "simulated"}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Custom endpoint</span><span className="text-foam">{(fund.inferenceConfig as any)?.endpoint ? "Yes" : "No"}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Visibility</span><span className="text-foam">{fund.isPublic ? "Public" : "Draft"}</span></div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-foam/70">Legacy fund — no asset universe configured.</p>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

@@ -35,6 +35,7 @@ export type OrchestrationResult = {
   mode: "simulated" | "live"
   votes: AgentVote[]
   weights: Record<string, number>
+  assetWeights: Record<string, number>
   summary: string
   checksPassed: boolean
 }
@@ -95,21 +96,30 @@ export async function orchestrate({
   riskConfig,
   portfolio,
   market,
+  assets,
   inferenceConfig,
 }: {
   mandate?: typeof DEFAULT_MANDATE
   riskConfig?: Record<string, unknown>
   portfolio?: Portfolio
   market?: MarketSnapshot
-  inferenceConfig?: { provider: string; endpoint: string; apiKey?: string }
+  assets?: string[]
+  inferenceConfig?: { provider: string; endpoint?: string; apiKey?: string; encryptedApiKey?: string }
 }): Promise<OrchestrationResult> {
   const dataBlock = JSON.stringify({ portfolio, market, riskConfig }, null, 2)
   const votes: AgentVote[] = []
 
   if (inferenceConfig?.provider !== "simulated" && inferenceConfig?.endpoint) {
     try {
-      const liveVotes = await runLiveInference(inferenceConfig, dataBlock, mandate)
-      return { mode: "live", ...aggregate(liveVotes, mandate) }
+      const apiKey = inferenceConfig.encryptedApiKey
+        ? decryptSecret(inferenceConfig.encryptedApiKey) ?? undefined
+        : inferenceConfig.apiKey
+      const liveVotes = await runLiveInference(
+        { ...inferenceConfig, endpoint: inferenceConfig.endpoint ?? "", apiKey },
+        dataBlock,
+        mandate,
+      )
+      return { mode: "live", ...aggregate(liveVotes, mandate), assetWeights: computeAssetWeights(assets, market) }
     } catch (e) {
       console.warn("[surfdao] live inference failed, falling back to simulated:", e)
     }
@@ -129,7 +139,26 @@ export async function orchestrate({
     votes.push(simulateVote(persona, dataBlock, portfolio ?? { cash: 10000, positions: {} }, marketSnapshot, agentRef.weight ?? 20))
   }
 
-  return { mode: "simulated", ...aggregate(votes, mandate) }
+  return { mode: "simulated", ...aggregate(votes, mandate), assetWeights: computeAssetWeights(assets, marketSnapshot) }
+}
+
+/* Target weights across the fund's chosen Keeta assets. Momentum + deterministic
+   noise, normalized to 100%, always respecting the selected universe. */
+function computeAssetWeights(
+  assets: string[] | undefined,
+  market: MarketSnapshot | undefined,
+): Record<string, number> {
+  const symbols = assets?.length ? assets : Object.keys(market?.prices ?? { USDC: 1, KTA: 1 })
+  if (!symbols.length) return {}
+  const raw = symbols.map((s) => {
+    const change = market?.changes24h?.[s] ?? 0
+    const noise = (seededScore(`${s}:${market?.asOf ?? "paper"}`) - 50) / 50
+    return Math.max(5, 50 + change * 4 + noise * 20)
+  })
+  const total = raw.reduce((a, b) => a + b, 0)
+  const weights: Record<string, number> = {}
+  symbols.forEach((s, i) => { weights[s] = Math.round((raw[i] / total) * 1000) / 10 })
+  return weights
 }
 
 function aggregate(votes: AgentVote[], mandate: typeof DEFAULT_MANDATE) {
@@ -158,23 +187,8 @@ function aggregate(votes: AgentVote[], mandate: typeof DEFAULT_MANDATE) {
   return { votes, weights, summary, checksPassed }
 }
 
-/* SSRF guard: only allow https URLs pointing at public hosts. */
-function isSafeEndpoint(raw: string): boolean {
-  try {
-    const url = new URL(raw)
-    if (url.protocol !== "https:") return false
-    const host = url.hostname.toLowerCase()
-    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return false
-    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
-      const parts = host.split(".").map(Number)
-      if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0 || (parts[0] === 169 && parts[1] === 254) || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168)) return false
-    }
-    if (host === "metadata.google.internal" || host === "169.254.169.254") return false
-    return true
-  } catch {
-    return false
-  }
-}
+import { isSafeEndpoint } from "@/lib/validate"
+import { decryptSecret } from "@/lib/inference-crypto"
 
 /* Placeholder for a real provider call. Implement against your endpoint. */
 async function runLiveInference(

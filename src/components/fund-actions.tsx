@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import AllocationModal from "@/components/allocation-modal"
-import { Play, Wallet, RefreshCw } from "lucide-react"
+import { Play, Wallet, RefreshCw, Globe, EyeOff } from "lucide-react"
 
 type Vote = { agentName: string; score: number; thesis: string }
 
@@ -13,10 +13,12 @@ export default function FundActions({
   slug,
   fundName,
   owner,
+  isPublic,
 }: {
   slug: string
   fundName: string
   owner: boolean
+  isPublic: boolean
 }) {
   const router = useRouter()
   const { toast } = useToast()
@@ -43,6 +45,21 @@ export default function FundActions({
     }
   }
 
+  async function togglePublish(isPublic: boolean) {
+    const res = await fetch(`/api/funds/${encodeURIComponent(slug)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPublic }),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error ?? "Could not update visibility")
+    toast({
+      title: isPublic ? "Fund published" : "Fund unpublished",
+      description: isPublic ? "It now appears on the public leaderboard." : "Only you can see it now.",
+    })
+    router.refresh()
+  }
+
   async function allocate(amount: number) {
     const res = await fetch("/api/allocations", {
       method: "POST",
@@ -66,6 +83,16 @@ export default function FundActions({
         <Button variant="outline" onClick={() => setAllocOpen(true)}>
           <Wallet className="h-4 w-4 mr-2" /> Allocate
         </Button>
+        {owner ? (
+          <Button
+            variant="ghost"
+            onClick={() => togglePublish(!isPublic)}
+            title={isPublic ? "Unpublish" : "Publish"}
+          >
+            {isPublic ? <EyeOff className="h-4 w-4 mr-2" /> : <Globe className="h-4 w-4 mr-2" />}
+            {isPublic ? "Unpublish" : "Publish"}
+          </Button>
+        ) : null}
       </div>
 
       {result && (

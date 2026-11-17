@@ -36,8 +36,10 @@ export const funds = pgTable("funds", {
   mandate: jsonb("mandate").notNull(),
   riskConfig: jsonb("risk_config").notNull(),
   inferenceConfig: jsonb("inference_config").notNull(),
+  assets: jsonb("assets").notNull(),
   keetaWalletAddress: text("keeta_wallet_address"),
-  isPublic: boolean("is_public").notNull().default(true),
+  isPublic: boolean("is_public").notNull().default(false),
+  publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
@@ -109,8 +111,10 @@ export type Fund = {
   mandate: unknown
   riskConfig: unknown
   inferenceConfig: unknown
+  assets: { symbol: string; name: string; address: string | null; weight: number; color: string }[]
   keetaWalletAddress: string | null
   isPublic: boolean
+  publishedAt?: string | null
   createdAt: string
 }
 export type FundSession = {
@@ -306,6 +310,15 @@ export const store = {
     findByOwner: async (ownerId: string) => {
       const rows = await store.funds.list()
       return rows.filter((r) => r.ownerId === ownerId)
+    },
+    update: async (id: string, updates: Partial<Omit<Fund, "id" | "createdAt">>) => {
+      // Read disk directly so an update is never shadowed by a stale cookie copy.
+      const rows = await readFile<Fund>(FILES.funds)
+      const idx = rows.findIndex((r) => r.id === id)
+      if (idx === -1) return null
+      rows[idx] = { ...rows[idx], ...updates }
+      await writeFile(FILES.funds, rows)
+      return rows[idx]
     },
     create: async (fund: Omit<Fund, "id" | "createdAt"> & { id?: string }) => {
       const rows = await store.funds.list()

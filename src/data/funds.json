@@ -282,5 +282,137 @@
     "isPublic": true,
     "id": "aeca394c-8548-4440-916d-c1328edcd327",
     "createdAt": "2026-11-17T12:01:06.659Z"
+  },
+  {
+    "ownerId": "0953f064-063c-45a9-8885-54b73bf409f3",
+    "name": "Keeta Asset Rider",
+    "description": "",
+    "slug": "keeta-asset-rider",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "openai",
+      "model": "surfdao-paper",
+      "endpoint": "https://api.openai.com/v1/chat/completions",
+      "encryptedApiKey": "Kku6ptFD7EtdZ1Q+.ICLPcCXyuOz0wyRFm6B8Gg==.q0V4FmwF3qXLbUAaHA=="
+    },
+    "assets": [
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "address": "keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna",
+        "weight": 50,
+        "color": "#2775CA"
+      },
+      {
+        "symbol": "KTA",
+        "name": "Keeta",
+        "address": null,
+        "weight": 50,
+        "color": "#3B82F6"
+      }
+    ],
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "publishedAt": "2026-11-17T12:46:28.463Z",
+    "id": "c0a61bec-249d-42f7-a114-537c6f168aa6",
+    "createdAt": "2026-11-17T12:46:28.485Z"
+  },
+  {
+    "ownerId": "8a0bb065-0742-4169-ad91-c511e64fd09c",
+    "name": "Leak Check",
+    "description": "",
+    "slug": "leak-check",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "endpoint": "https://api.openai.com/v1",
+      "encryptedApiKey": "2igPd3mLXlLgA+Fp.0HACC1HnN92NL3EKhIRMvQ==.nKV94rD1OGhNa7oeAEGmh+g="
+    },
+    "assets": [
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "address": "keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna",
+        "weight": 60,
+        "color": "#2775CA"
+      },
+      {
+        "symbol": "KTA",
+        "name": "Keeta",
+        "address": null,
+        "weight": 40,
+        "color": "#3B82F6"
+      }
+    ],
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "publishedAt": "2026-11-17T12:47:46.304Z",
+    "id": "ed276e92-d40c-4426-ba2b-4e7dd186f31e",
+    "createdAt": "2026-11-17T12:47:45.408Z"
   }
 ]
