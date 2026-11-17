@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import AllocationModal from "@/components/allocation-modal"
 import Disclaimer from "@/components/disclaimer"
-import ModeToggle, { type Mode } from "@/components/mode-toggle"
+import ModeToggle from "@/components/mode-toggle"
+import { useMode } from "@/components/mode-provider"
 import { DollarSign, Users, TrendingUp, Search } from "lucide-react"
 
 type Fund = {
@@ -31,7 +32,7 @@ export default function AllocatePage() {
   const [funds, setFunds] = React.useState<Fund[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
-  const [mode, setMode] = React.useState<Mode>("paper")
+  const { mode, setMode } = useMode()
   const [target, setTarget] = React.useState<Fund | null>(null)
 
   React.useEffect(() => {

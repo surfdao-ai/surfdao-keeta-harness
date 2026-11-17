@@ -7,9 +7,8 @@ import type { Fund, FundSession, Allocation, User } from "@/lib/db/schema"
 import { fundStats, publicFund } from "@/lib/fund-helpers"
 import FundCard from "@/components/fund-card"
 import Disclaimer from "@/components/disclaimer"
+import { useMode, type Mode } from "@/components/mode-provider"
 import { cn } from "@/lib/utils"
-
-type Mode = "paper" | "live"
 
 export default function DashboardView({
   user,
@@ -24,7 +23,7 @@ export default function DashboardView({
   allocations: Allocation[]
   liveEnabled: boolean
 }) {
-  const [mode, setMode] = React.useState<Mode>("paper")
+  const { mode, setMode } = useMode()
 
   const counts = {
     paper: funds.filter((f) => (f.executionMode ?? "paper") === "paper").length,

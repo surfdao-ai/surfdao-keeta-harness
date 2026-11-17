@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import LeaderboardTable, { type LeaderboardRow } from "@/components/leaderboard-table"
-import ModeToggle, { type Mode } from "@/components/mode-toggle"
+import ModeToggle from "@/components/mode-toggle"
+import { useMode } from "@/components/mode-provider"
 
 export default function LeaderboardView({ rows }: { rows: LeaderboardRow[] }) {
-  const [mode, setMode] = React.useState<Mode>("paper")
+  const { mode, setMode } = useMode()
   const counts = {
     paper: rows.filter((r) => (r.mode ?? "paper") === "paper").length,
     live: rows.filter((r) => (r.mode ?? "paper") === "live").length,
