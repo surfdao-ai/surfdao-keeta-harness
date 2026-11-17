@@ -74,7 +74,7 @@ Copy `.env.example` to `.env.local` to customize. **None are required for paper 
 | `KEETA_NETWORK` | Keeta network | `main` |
 | `X402_GATEWAY` | KeeSpecs x402 gateway base URL | (simulated) |
 | `X402_TOKEN` | Paid x402 access token | (simulated) |
-| `DATABASE_URL` | Neon/Postgres connection for production store | (JSON file) |
+| `DATABASE_URL` | Neon/Postgres connection — **provisioned and connected via Vercel Marketplace** | (JSON file fallback) |
 | `COOKIE_SECRET` | HMAC secret for signed cookies (set in production) | dev fallback |
 | `INFERENCE_SECRET` | AES-GCM secret for user API keys (set in production) | `COOKIE_SECRET` |
 
@@ -270,8 +270,9 @@ explains paper vs live and the five steps to enable real execution.
 
 **Operational notes**
 - `npm run build --webpack` + `npx tsc --noEmit` both pass.
-- Cookie mirroring keeps per-browser data consistent across serverless instances;
-  durable shared storage still requires Drizzle + Neon.
+- **Neon/Postgres is provisioned and connected** (`surfdao-db` via Vercel Marketplace).
+  When `DATABASE_URL` is present, `lib/db/pg-store.ts` is used automatically and all
+  tables are created on first request. The JSON/cookie store remains a local fallback.
 - Live execution remains disabled unless `LIVE_MODE=true`.
 
 ## Verification

@@ -85,5 +85,19 @@
     "passwordHash": "d129b534fabecad9bc2dbc96e2a1ad3e:a3e636debbec929b515e1388b4bd68986b428afeac3e9a4b3cccd1efc28a493c74d319deb4cffa7f54d2b002bb96575497f665e1a74f1396d776b964e1830d68",
     "id": "41999dc4-af28-473b-839d-2a7431674483",
     "createdAt": "2026-11-17T13:26:59.357Z"
+  },
+  {
+    "email": "dbtest@surfdao.ai",
+    "name": "DB Test",
+    "passwordHash": "43dd5bb725d40f306cea4a610749de4f:3ec56d38da57becd7360796e78b344d5ee7e085cb3d5a055f6bcc3fa43fe0baf31ff2f05d3caae13c802922c3ea446d5b26484bac7c91d5c591ab509a4e6c187",
+    "id": "765c8cda-c948-4ab0-972e-745a63ef267a",
+    "createdAt": "2026-11-17T15:57:16.135Z"
+  },
+  {
+    "email": "pgtest2@surfdao.ai",
+    "name": "PG Test 2",
+    "passwordHash": "fc583d5350447c9cf83c78440f31da51:c222aa1d393d2638b1572c93837f365e573a9575c6bb320bc6dcb70851ee6351d5027e966f8b9ad814481d1f39aa4e6e59aef3084ea30651326d3d9c0c7fee3b",
+    "id": "301971b4-fbb2-458b-9377-d86fac2d8557",
+    "createdAt": "2026-11-17T15:58:19.346Z"
   }
 ]

@@ -184,6 +184,7 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { cookies } from "next/headers"
 import { signValue, unsignValue } from "@/lib/cookie-sign"
+import { pgEnabled, pgStore } from "@/lib/db/pg-store"
 
 const DATA_DIR = path.join(process.cwd(), "src/data")
 const FILES = {
@@ -198,7 +199,7 @@ const FILES = {
 type FileKey = (typeof FILES)[keyof typeof FILES]
 
 /* Global in-memory cache. On Vercel the filesystem is read-only, so writes
-   fall back to this per-instance store. Locally, data also persists to disk.
+   fall back to this per-instance fileStore. Locally, data also persists to disk.
    For durable production data, swap in Drizzle + Neon (see README). */
 const mem = ((globalThis as Record<string, unknown>).__surfdao_memstore ??=
   new Map<FileKey, unknown[]>()) as Map<FileKey, unknown[]>
@@ -228,7 +229,7 @@ async function writeFile<T>(key: FileKey, data: T[]) {
 
 /* --------------------------------------------------------------------------
    Per-browser cookie cache. On Vercel each request can hit a different lambda
-   with its own in-memory store. Persisting just-created records in a cookie
+   with its own in-memory fileStore. Persisting just-created records in a cookie
    makes the create → detail-page hop reliable for the creator.
 --------------------------------------------------------------------------- */
 
@@ -239,6 +240,7 @@ const USER_COOKIE = "surfdao_user"
 const AUTH_SESSION_COOKIE = "surfdao_auth"
 
 async function readCookie<T>(name: string): Promise<T[]> {
+  if (pgEnabled()) return []
   try {
     const jar = await cookies()
     const raw = jar.get(name)?.value
@@ -253,6 +255,7 @@ async function readCookie<T>(name: string): Promise<T[]> {
 }
 
 async function writeCookie<T>(name: string, rows: T[]) {
+  if (pgEnabled()) return
   try {
     const jar = await cookies()
     const value = signValue(JSON.stringify(rows.slice(0, 4)))
@@ -292,7 +295,7 @@ export async function rememberAuthSession(session: Session) {
   await writeCookie(AUTH_SESSION_COOKIE, [session])
 }
 
-export const store = {
+export const fileStore = {
   users: {
     list: async () => {
       const disk = await readFile<User>(FILES.users)
@@ -302,11 +305,11 @@ export const store = {
       return [...map.values()]
     },
     findByEmail: async (email: string) => {
-      const rows = await store.users.list()
+      const rows = await fileStore.users.list()
       return rows.find((r) => r.email === email) ?? null
     },
     create: async (user: Omit<User, "id" | "createdAt"> & { id?: string }) => {
-      const rows = await store.users.list()
+      const rows = await fileStore.users.list()
       const row: User = {
         ...user,
         id: user.id ?? crypto.randomUUID(),
@@ -326,7 +329,7 @@ export const store = {
       return rows[idx]
     },
     updateKeetaAddress: async (id: string, keetaAddress: string) => {
-      return store.users.update(id, { keetaAddress })
+      return fileStore.users.update(id, { keetaAddress })
     },
   },
   funds: {
@@ -337,11 +340,11 @@ export const store = {
       return [...cookieFunds.filter((f) => !ids.has(f.id)), ...disk]
     },
     findBySlug: async (slug: string) => {
-      const rows = await store.funds.list()
+      const rows = await fileStore.funds.list()
       return rows.find((r) => r.slug === slug) ?? null
     },
     findByOwner: async (ownerId: string) => {
-      const rows = await store.funds.list()
+      const rows = await fileStore.funds.list()
       return rows.filter((r) => r.ownerId === ownerId)
     },
     update: async (id: string, updates: Partial<Omit<Fund, "id" | "createdAt">>) => {
@@ -354,7 +357,7 @@ export const store = {
       return rows[idx]
     },
     create: async (fund: Omit<Fund, "id" | "createdAt"> & { id?: string }) => {
-      const rows = await store.funds.list()
+      const rows = await fileStore.funds.list()
       const row: Fund = {
         ...fund,
         id: fund.id ?? crypto.randomUUID(),
@@ -373,7 +376,7 @@ export const store = {
       return [...cookieAllocs.filter((a) => !ids.has(a.id)), ...disk]
     },
     create: async (allocation: Omit<Allocation, "id" | "allocatedAt">) => {
-      const rows = await store.allocations.list()
+      const rows = await fileStore.allocations.list()
       const row: Allocation = {
         ...allocation,
         id: crypto.randomUUID(),
@@ -384,7 +387,7 @@ export const store = {
       return row
     },
     byFund: async (fundId: string) => {
-      const rows = await store.allocations.list()
+      const rows = await fileStore.allocations.list()
       return rows.filter((r) => r.fundId === fundId && (r.status === "active" || r.status === "pending"))
     },
     update: async (id: string, updates: Partial<Allocation>) => {
@@ -405,11 +408,11 @@ export const store = {
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
     },
     byFund: async (fundId: string) => {
-      const rows = await store.fundSessions.list()
+      const rows = await fileStore.fundSessions.list()
       return rows.filter((r) => r.fundId === fundId).sort((a, b) => b.timestamp.localeCompare(a.timestamp))
     },
     create: async (session: Omit<FundSession, "id" | "timestamp">) => {
-      const rows = await store.fundSessions.list()
+      const rows = await fileStore.fundSessions.list()
       const row: FundSession = {
         ...session,
         id: crypto.randomUUID(),
@@ -423,15 +426,15 @@ export const store = {
   withdrawals: {
     list: () => readFile<WithdrawalRequest>(FILES.withdrawals),
     byUser: async (userId: string) => {
-      const rows = await store.withdrawals.list()
+      const rows = await fileStore.withdrawals.list()
       return rows.filter((w) => w.userId === userId).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
     },
     byFund: async (fundId: string) => {
-      const rows = await store.withdrawals.list()
+      const rows = await fileStore.withdrawals.list()
       return rows.filter((w) => w.fundId === fundId).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
     },
     create: async (req: Omit<WithdrawalRequest, "id" | "requestedAt">) => {
-      const rows = await store.withdrawals.list()
+      const rows = await fileStore.withdrawals.list()
       const row: WithdrawalRequest = {
         ...req,
         id: crypto.randomUUID(),
@@ -442,7 +445,7 @@ export const store = {
       return row
     },
     update: async (id: string, updates: Partial<WithdrawalRequest>) => {
-      const rows = await store.withdrawals.list()
+      const rows = await fileStore.withdrawals.list()
       const idx = rows.findIndex((w) => w.id === id)
       if (idx === -1) return null
       rows[idx] = { ...rows[idx], ...updates }
@@ -458,20 +461,23 @@ export const store = {
       return [...cookieSessions.filter((s) => !ids.has(s.token)), ...disk]
     },
     findByToken: async (token: string) => {
-      const rows = await store.sessions.list()
+      const rows = await fileStore.sessions.list()
       return rows.find((r) => r.token === token) ?? null
     },
     create: async (session: { userId: string; token: string; expiresAt: string }) => {
-      const rows = await store.sessions.list()
+      const rows = await fileStore.sessions.list()
       const row: Session = { ...session, id: crypto.randomUUID() }
       rows.push(row)
       await writeFile(FILES.sessions, rows)
       return row
     },
     delete: async (token: string) => {
-      const rows = await store.sessions.list()
+      const rows = await fileStore.sessions.list()
       const filtered = rows.filter((r) => r.token !== token)
       await writeFile(FILES.sessions, filtered)
     },
   },
 }
+
+/* Durable Postgres when configured; zero-config file/cookie store otherwise. */
+export const store = pgEnabled() ? (pgStore as unknown as typeof fileStore) : fileStore
