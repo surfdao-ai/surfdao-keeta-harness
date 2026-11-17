@@ -32,6 +32,7 @@ export default async function MyFundsPage() {
               <FundCard
                 key={f.id}
                 {...publicFund(f)}
+                mode={f.executionMode}
                 totalReturn={stats.totalReturn}
                 aum={stats.aum}
                 allocators={stats.allocators}

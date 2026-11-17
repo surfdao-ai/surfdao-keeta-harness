@@ -10,6 +10,7 @@ export type FundCardProps = {
   description?: string | null
   owner?: string
   status?: string
+  mode?: string
   totalReturn?: number
   aum?: number
   allocators?: number
@@ -20,6 +21,7 @@ export default function FundCard({
   description = "",
   owner,
   status = "paper",
+  mode,
   totalReturn = 0,
   aum = 0,
   allocators = 0,
@@ -32,8 +34,8 @@ export default function FundCard({
     >
       <div className="surfboard-card relative overflow-hidden p-5 aspect-video">
         <div className="absolute top-4 left-4">
-          <Badge variant={status === "live" ? "success" : "default"}>
-            {status === "live" ? "LIVE" : "PAPER"}
+          <Badge variant={mode === "live" ? "destructive" : status === "live" ? "success" : "default"}>
+            {mode === "live" ? "LIVE" : status === "live" ? "LIVE" : "PAPER"}
           </Badge>
         </div>
         <div className="absolute top-4 right-4">
