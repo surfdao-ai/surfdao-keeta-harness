@@ -148,7 +148,11 @@ enables live trading. To actually send real value:
 6. **Profile** — review funds created, allocations made, and session history; edit profile.
 
 Asset discovery lives in `lib/assets/keeta-assets.ts` (`GET /api/assets`), with a curated
-fallback when KeeSpecs is unreachable.
+fallback when KeeSpecs is unreachable. The registry is **auto-synced every 5 minutes** on
+demand (short TTL), and the fund wizard shows the last-sync time, total asset count, and a
+**"Check for new assets"** button that forces a fresh registry fetch (`?refresh=true`).
+Newly discovered symbols are flagged with a `NEW` badge. The cap is 100 assets so new
+listings aren't dropped.
 
 ---
 

@@ -14,6 +14,16 @@ export type KeetaAsset = {
   kind: "stablecoin" | "asset" | "fiat"
   color: string
   priceUsd: number
+  /** true when this symbol first appeared in the most recent registry sync */
+  isNew?: boolean
+}
+
+export type AssetUniverseResult = {
+  assets: KeetaAsset[]
+  lastUpdated: string
+  source: "keespecs+curated" | "curated"
+  newlyListed: string[]
+  count: number
 }
 
 const KEEPSPECS = "https://keespecs.xyz"
@@ -32,8 +42,12 @@ export const CURATED_ASSETS: KeetaAsset[] = [
 ]
 
 const COLORS = ["#8B5A2B", "#FF6B35", "#A855F7", "#14B8A6", "#EAB308", "#EC4899", "#64748B"]
-const TTL = 60 * 60 * 1000
-let cache: { at: number; assets: KeetaAsset[] } | null = null
+// Short TTL so new Keeta listings appear on the next fund creation automatically.
+const TTL = 5 * 60 * 1000
+type AssetCache = { at: number; assets: KeetaAsset[]; source: AssetUniverseResult["source"]; newlyListed: string[] }
+let cache: AssetCache | null = null
+// In-flight promise so concurrent requests don't double-fetch the registry.
+let inFlight: Promise<AssetCache> | null = null
 
 type RegistryRow = { code?: string; name?: string; token?: string; currency?: string; decimals?: number; kind?: string }
 
@@ -50,15 +64,17 @@ function seededPrice(symbol: string): number {
   return 0.5 + (Math.abs(h) % 1000) / 100
 }
 
-export async function getAssetUniverse(): Promise<KeetaAsset[]> {
-  if (cache && Date.now() - cache.at < TTL) return cache.assets
+async function syncAssets(): Promise<AssetCache> {
+  const previous = new Set(cache?.assets.map((a) => a.symbol) ?? [])
   let assets = [...CURATED_ASSETS]
+  let source: AssetUniverseResult["source"] = "curated"
   try {
     const [stables, directory, supply] = await Promise.all([
       fetchRegistry("/api/stablecoins").catch(() => []),
       fetchRegistry("/api/directory").catch(() => []),
       fetchRegistry("/api/supply").catch(() => []),
     ])
+    if (stables.length + directory.length + supply.length > 0) source = "keespecs+curated"
     const seen = new Set(assets.map((a) => a.symbol.toUpperCase()))
     for (const row of [...stables, ...directory, ...supply]) {
       const symbol = String(row.code ?? row.currency ?? "").toUpperCase().slice(0, 8)
@@ -72,14 +88,49 @@ export async function getAssetUniverse(): Promise<KeetaAsset[]> {
         kind: row.kind === "stablecoin" ? "stablecoin" : "asset",
         color: COLORS[assets.length % COLORS.length],
         priceUsd: seededPrice(symbol),
+        isNew: cache ? !previous.has(symbol) : false,
       })
-      if (assets.length >= 24) break
+      if (assets.length >= 100) break
     }
   } catch {
     // curated fallback is enough for paper mode
   }
-  cache = { at: Date.now(), assets }
-  return assets
+  const newlyListed = cache
+    ? assets.filter((a) => !previous.has(a.symbol)).map((a) => a.symbol)
+    : []
+  const result: AssetCache = { at: Date.now(), assets, source, newlyListed }
+  cache = result
+  return result
+}
+
+/** Force a fresh registry check (used by the wizard's Refresh button). */
+export async function refreshAssetUniverse(): Promise<AssetCache> {
+  inFlight = syncAssets()
+  try { return await inFlight } finally { inFlight = null }
+}
+
+/** Normal get — auto syncs when cache is older than TTL. */
+async function getCached(): Promise<AssetCache> {
+  if (cache && Date.now() - cache.at < TTL) return cache
+  if (inFlight) return inFlight
+  inFlight = syncAssets()
+  try { return await inFlight } finally { inFlight = null }
+}
+
+export async function getAssetUniverse(): Promise<KeetaAsset[]> {
+  return (await getCached()).assets
+}
+
+/** Detailed result with sync metadata for the fund-creation UI. */
+export async function getAssetUniverseDetailed(force = false): Promise<AssetUniverseResult> {
+  const c = force ? await refreshAssetUniverse() : await getCached()
+  return {
+    assets: c.assets,
+    lastUpdated: new Date(c.at).toISOString(),
+    source: c.source,
+    newlyListed: c.newlyListed,
+    count: c.assets.length,
+  }
 }
 
 export async function getPrices(symbols: string[]): Promise<Record<string, number>> {

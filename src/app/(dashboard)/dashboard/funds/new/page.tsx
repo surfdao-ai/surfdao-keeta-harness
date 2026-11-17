@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Disclaimer from "@/components/disclaimer"
 import { AGENT_PERSONAS, DEFAULT_MANDATE, DEFAULT_RISK_CONFIG } from "@/lib/agents/personas"
-import { Flag, Wallet, ShieldCheck, Sparkles, Check, AlertCircle, Coins, Globe, KeyRound } from "lucide-react"
+import { Flag, Wallet, ShieldCheck, Sparkles, Check, AlertCircle, Coins, Globe, KeyRound, RefreshCw } from "lucide-react"
 
 const MAX = 100
 type Asset = { symbol: string; name: string; address: string | null; decimals: number; color: string; priceUsd: number }
@@ -22,6 +22,9 @@ export default function NewFundPage() {
   const [loading, setLoading] = React.useState(false)
   const [universe, setUniverse] = React.useState<Asset[]>([])
   const [assetsLoading, setAssetsLoading] = React.useState(true)
+  const [assetsRefreshing, setAssetsRefreshing] = React.useState(false)
+  const [lastSynced, setLastSynced] = React.useState<string | null>(null)
+  const [newlyListed, setNewlyListed] = React.useState<string[]>([])
   const [publish, setPublish] = React.useState(true)
   const [form, setForm] = React.useState({
     name: "",
@@ -39,16 +42,20 @@ export default function NewFundPage() {
     apiKey: "",
   })
 
-  React.useEffect(() => {
-    fetch("/api/assets")
-      .then((r) => (r.ok ? r.json() : { assets: [] }))
-      .then((j) => {
-        setUniverse(j.assets ?? [])
-        // Sensible default: stablebase + Keeta, 50/50
+  const loadAssets = React.useCallback(async (refresh = false) => {
+    if (refresh) setAssetsRefreshing(true)
+    try {
+      const res = await fetch(refresh ? "/api/assets?refresh=true" : "/api/assets")
+      const j = res.ok ? await res.json() : { assets: [] }
+      setUniverse(j.assets ?? [])
+      setLastSynced(j.lastUpdated ?? null)
+      setNewlyListed(j.newlyListed ?? [])
+      // Only set defaults on the initial load so refreshing won't reset choices.
+      if (!refresh) {
         const defaults = (j.assets ?? []).filter((a: Asset) => ["USDC", "KTA"].includes(a.symbol)).slice(0, 2)
         if (defaults.length) {
           const w = Math.floor(MAX / defaults.length)
-          setForm((f) => ({
+          setForm((f) => (f.assets.length ? f : {
             ...f,
             assets: defaults.map((a: Asset, i: number) => ({
               symbol: a.symbol, name: a.name, address: a.address, color: a.color,
@@ -56,10 +63,14 @@ export default function NewFundPage() {
             })),
           }))
         }
-      })
-      .catch(() => {})
-      .finally(() => setAssetsLoading(false))
+      }
+    } catch {} finally {
+      setAssetsLoading(false)
+      setAssetsRefreshing(false)
+    }
   }, [])
+
+  React.useEffect(() => { loadAssets(false) }, [loadAssets])
 
   const agentTotal = form.agents.reduce((s, a) => s + a.weight, 0)
   const assetTotal = form.assets.reduce((s, a) => s + a.weight, 0)
@@ -214,7 +225,16 @@ export default function NewFundPage() {
         {step === 3 && (
           <div className="space-y-5">
             <div className="flex items-center gap-2"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-seafoam/15 text-seafoam"><Coins className="h-5 w-5" /></div><h2 className="text-xl font-bold text-foam">Keeta asset universe</h2></div>
-            <p className="text-sm text-foam/80">Pick the assets your agents may allocate into. Sourced from the Keeta registry (KeeSpecs) with a curated fallback. Weights must total 100%.</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+              <div className="text-xs text-foam/80">
+                <span className="font-semibold text-foam">{universe.length}</span> assets · auto-synced from KeeSpecs
+                {lastSynced && <span className="ml-1 text-foam/60">· {new Date(lastSynced).toLocaleTimeString()}</span>}
+                {newlyListed.length > 0 && <span className="ml-2 rounded-full bg-seafoam/15 px-2 py-0.5 text-seafoam">{newlyListed.length} new: {newlyListed.slice(0, 4).join(", ")}</span>}
+              </div>
+              <button onClick={() => loadAssets(true)} disabled={assetsRefreshing} className="inline-flex items-center gap-1.5 rounded-lg border border-wave-blue/30 px-3 py-1.5 text-xs font-medium text-wave-blue transition hover:bg-wave-blue/10 disabled:opacity-50">
+                <RefreshCw className={`h-3.5 w-3.5 ${assetsRefreshing ? "animate-spin" : ""}`} /> {assetsRefreshing ? "Checking…" : "Check for new assets"}
+              </button>
+            </div>
             {assetsLoading ? <p className="text-sm text-foam/70">Loading available assets…</p> : (
               <div className="space-y-2">
                 {universe.map((asset) => {
@@ -223,7 +243,7 @@ export default function NewFundPage() {
                     <div key={asset.symbol} className={`flex items-center gap-3 rounded-xl border p-3 transition ${selected ? "border-seafoam/40 bg-seafoam/5" : "border-white/10 bg-white/[0.02]"}`}>
                       <button onClick={() => toggleAsset(asset)} aria-label={`Toggle ${asset.symbol}`}><Badge variant={selected ? "success" : "outline"}>{selected ? <Check className="h-3 w-3" /> : "+"}</Badge></button>
                       <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: asset.color }} />
-                      <div className="min-w-0 flex-1"><div className="text-sm font-semibold text-foam">{asset.symbol} <span className="font-normal text-foam/70">{asset.name}</span></div><div className="truncate text-[10px] text-foam/60">{asset.address ? `${asset.address.slice(0, 16)}…` : "Keeta base asset"} · ${asset.priceUsd.toFixed(2)}</div></div>
+                      <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-foam">{asset.symbol} <span className="font-normal text-foam/70">{asset.name}</span>{(asset as any).isNew && <Badge variant="success">NEW</Badge>}</div><div className="truncate text-[10px] text-foam/60">{asset.address ? `${asset.address.slice(0, 16)}…` : "Keeta base asset"} · ${asset.priceUsd.toFixed(2)}</div></div>
                       {selected && (<div className="flex items-center gap-2"><input type="range" min="0" max="100" value={selected.weight} onChange={(e) => updateAssetWeight(asset.symbol, Number(e.target.value))} className="w-20 accent-seafoam sm:w-24" aria-label={`${asset.symbol} weight`} /><span className="w-9 text-right text-sm font-semibold text-foam">{selected.weight}%</span></div>)}
                     </div>
                   )
