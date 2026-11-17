@@ -126,7 +126,10 @@ enables live trading. To actually send real value:
    **Agents** (strategy-style crew, weights capped at 100%) → **Assets** (pick from the
    live Keeta/KeeSpecs universe — USDC, KTA, EURC, fiat-backed tokens, CBBTC — with weights
    capped at 100%) → **Harness** (risk limits + inference provider) → **Publish**.
-2. **Bring your own inference** — select OpenAI/Anthropic-compatible and enter an endpoint,
+2. **Bring your own inference (any provider)** — enter any provider label (OpenRouter,
+   xAI/Grok, Groq, Together, DeepSeek, Mistral, Anthropic, or your own) plus a public https
+   endpoint, key, and model. OpenAI-compatible endpoints use chat/completions; Anthropic uses
+   the Messages API; other labels work through the same generic adapter.
    API key, and model. The endpoint is SSRF-checked (https + public hosts only) and the key
    is AES-256-GCM encrypted server-side; keys are never returned to the browser. If the
    external call fails, the harness falls back to the deterministic paper simulator so the

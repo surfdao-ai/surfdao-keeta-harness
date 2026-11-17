@@ -115,7 +115,12 @@ export async function orchestrate({
         ? decryptSecret(inferenceConfig.encryptedApiKey) ?? undefined
         : inferenceConfig.apiKey
       const liveVotes = await runLiveInference(
-        { ...inferenceConfig, endpoint: inferenceConfig.endpoint ?? "", apiKey },
+        {
+          provider: inferenceConfig.provider,
+          model: (inferenceConfig as any).model ?? "default",
+          endpoint: inferenceConfig.endpoint ?? "",
+          apiKey,
+        },
         dataBlock,
         mandate,
       )
@@ -190,22 +195,68 @@ function aggregate(votes: AgentVote[], mandate: typeof DEFAULT_MANDATE) {
 import { isSafeEndpoint } from "@/lib/validate"
 import { decryptSecret } from "@/lib/inference-crypto"
 
-/* Placeholder for a real provider call. Implement against your endpoint. */
+/* Provider-agnostic call. OpenAI-compatible endpoints (OpenRouter, xAI/Grok,
+   Groq, Together, DeepSeek, Mistral, OpenAI…) use chat/completions; Anthropic
+   uses the messages API. Any other host gets a generic JSON passthrough. */
 async function runLiveInference(
-  config: { provider: string; endpoint: string; apiKey?: string },
+  config: { provider: string; model: string; endpoint: string; apiKey?: string },
   dataBlock: string,
   mandate: typeof DEFAULT_MANDATE,
 ): Promise<AgentVote[]> {
   if (!isSafeEndpoint(config.endpoint)) throw new Error("Unsafe inference endpoint")
-  const res = await fetch(config.endpoint, {
+  const p = config.provider.toLowerCase()
+  const isAnthropic = p.includes("anthropic") || config.endpoint.includes("/v1/messages")
+  const system = "You are a hedge-fund analyst harness. Return ONLY strict JSON: { \"votes\": [{\"agentId\",\"agentName\",\"score\",\"thesis\",\"risks\",\"suggestedWeight\"}] }"
+  const user = `Agents: ${JSON.stringify(mandate.agents)}\n\nData:\n${dataBlock}`
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  let body: Record<string, unknown>
+  let url = config.endpoint
+
+  if (isAnthropic) {
+    headers["x-api-key"] = config.apiKey ?? ""
+    headers["anthropic-version"] = "2023-06-01"
+    if (!config.endpoint.includes("/messages")) {
+      url = config.endpoint.replace(/\/$/, "") + "/messages"
+    }
+    body = {
+      model: config.model,
+      max_tokens: 2000,
+      system,
+      messages: [{ role: "user", content: user }],
+    }
+  } else {
+    headers.Authorization = `Bearer ${config.apiKey ?? ""}`
+    if (!config.endpoint.includes("/chat/completions")) {
+      // Common base URLs: append the standard path when it looks like a base.
+      url = config.endpoint.replace(/\/$/, "") + "/chat/completions"
+    }
+    body = {
+      model: config.model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.4,
+    }
+  }
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-    },
-    body: JSON.stringify({ provider: config.provider, data: dataBlock, mandate }),
+    headers,
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(25_000),
   })
   if (!res.ok) throw new Error(`inference ${res.status}`)
-  const json = await res.json()
-  return json.votes ?? []
+  const json: any = await res.json()
+
+  const raw = json.votes ?? json.choices?.[0]?.message?.content ?? json.content
+  let parsed = raw
+  if (typeof raw === "string") {
+    try { parsed = JSON.parse(raw) } catch { throw new Error("Inference response was not valid JSON") }
+  }
+  const votes = Array.isArray(parsed) ? parsed : parsed?.votes
+  if (!Array.isArray(votes)) throw new Error("Inference response did not contain votes")
+  return votes as AgentVote[]
 }

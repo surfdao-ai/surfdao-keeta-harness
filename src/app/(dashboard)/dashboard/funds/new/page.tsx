@@ -256,11 +256,13 @@ export default function NewFundPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foam">Inference provider</label>
-              <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="flex h-10 w-full rounded-xl border border-white/15 bg-ocean-900/40 px-3 text-sm text-foam">
-                <option value="simulated">Simulated (built-in paper harness)</option>
-                <option value="openai">OpenAI-compatible (your endpoint)</option>
-                <option value="anthropic">Anthropic-compatible (your endpoint)</option>
-              </select>
+              <Input list="provider-suggestions" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="e.g. openrouter, xai, anthropic, groq, my-provider" />
+              <datalist id="provider-suggestions">
+                {["simulated", "openrouter", "openai", "anthropic", "xai (grok)", "groq", "together", "deepseek", "mistral"].map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+              <p className="text-[11px] text-foam/70">Any provider works — enter its label plus a public https endpoint below. Most use OpenAI-compatible chat completions; Anthropic uses the Messages API.</p>
             </div>
             {form.provider !== "simulated" && (
               <div className="space-y-4 rounded-xl border border-wave-blue/25 bg-wave-blue/5 p-4">

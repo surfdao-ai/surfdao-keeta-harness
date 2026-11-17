@@ -91,11 +91,12 @@ export default function InferenceSettings({
         <form onSubmit={save} className="mt-4 space-y-3 border-t border-white/10 pt-4">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-foam/80">Provider</label>
-            <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="flex h-10 w-full rounded-xl border border-white/15 bg-ocean-900/40 px-3 text-sm text-foam">
-              <option value="simulated">Simulated (built-in paper harness)</option>
-              <option value="openai">OpenAI-compatible</option>
-              <option value="anthropic">Anthropic-compatible</option>
-            </select>
+            <Input list={`providers-${slug}`} value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="Any provider (openrouter, xai, groq…)" />
+            <datalist id={`providers-${slug}`}>
+              {["simulated", "openrouter", "openai", "anthropic", "xai (grok)", "groq", "together", "deepseek", "mistral"].map((p) => (
+                <option key={p} value={p} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-foam/80">Model</label>

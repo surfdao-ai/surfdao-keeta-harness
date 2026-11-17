@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
 import { getApiUser } from "@/lib/auth"
 import { store, rememberFund, type Fund } from "@/lib/db/schema"
-import { DEFAULT_MANDATE, DEFAULT_RISK_CONFIG, DEFAULT_INFERENCE_CONFIG } from "@/lib/agents/personas"
-import { safeText, safeJson, assertSameOrigin, isSafeEndpoint } from "@/lib/validate"
-import { encryptSecret } from "@/lib/inference-crypto"
+import { DEFAULT_MANDATE, DEFAULT_RISK_CONFIG } from "@/lib/agents/personas"
+import { safeText, safeJson, assertSameOrigin } from "@/lib/validate"
 import { getAssetUniverse } from "@/lib/assets/keeta-assets"
 import { publicFund } from "@/lib/fund-helpers"
+import { normalizeInferenceConfig } from "@/lib/inference-config"
 
 export async function GET() {
   if (!(await getApiUser())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Asset weights must total 100%" }, { status: 400 })
   }
 
-  const inference = await safeInference(body.inferenceConfig)
+  const inference = normalizeInferenceConfig(body.inferenceConfig)
   if (!inference.ok) return NextResponse.json({ error: inference.error }, { status: 400 })
   const publish = body.publish !== false
   const feePctRaw = Number(body.performanceFeePct)
@@ -85,31 +85,3 @@ export async function POST(req: Request) {
   return NextResponse.json({ fund: publicFund(fund) }, { status: 201 })
 }
 
-/* Validate + store inference config. The key is encrypted; the URL is SSRF-checked. */
-async function safeInference(value: unknown): Promise<
-  { ok: true; config: Record<string, unknown> } | { ok: false; error: string }
-> {
-  const obj = value && typeof value === "object" ? (value as Record<string, unknown>) : {}
-  const provider = ["simulated", "openai", "anthropic"].includes(String(obj.provider))
-    ? String(obj.provider)
-    : "simulated"
-
-  if (provider === "simulated") {
-    return { ok: true, config: { ...DEFAULT_INFERENCE_CONFIG, provider } }
-  }
-
-  if (!isSafeEndpoint(obj.endpoint)) {
-    return { ok: false, error: "Inference endpoint must be a public https URL" }
-  }
-  const apiKey = safeText(obj.apiKey, 200)
-  if (!apiKey) return { ok: false, error: "An API key is required for a custom inference endpoint" }
-  return {
-    ok: true,
-    config: {
-      provider,
-      model: safeText(obj.model, 60) ?? "gpt-4o-mini",
-      endpoint: obj.endpoint,
-      encryptedApiKey: encryptSecret(apiKey),
-    },
-  }
-}

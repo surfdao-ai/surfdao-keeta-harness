@@ -2,8 +2,8 @@ import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { publicFund } from "@/lib/fund-helpers"
 import { getApiUser } from "@/lib/auth"
-import { assertSameOrigin, isSafeEndpoint, safeText } from "@/lib/validate"
-import { encryptSecret } from "@/lib/inference-crypto"
+import { assertSameOrigin, safeText } from "@/lib/validate"
+import { normalizeInferenceConfig } from "@/lib/inference-config"
 
 export async function GET(
   _req: Request,
@@ -50,32 +50,14 @@ export async function PATCH(
     const w = body.keetaWalletAddress
     updates.keetaWalletAddress = typeof w === "string" && w.startsWith("keeta_") ? w.slice(0, 128) : null
   }
-  // Creator can switch inference provider/model/endpoint after creation.
+  // Creator can switch to any inference provider/model/endpoint after creation.
   if (body.inferenceConfig && typeof body.inferenceConfig === "object") {
-    const cfg = body.inferenceConfig as Record<string, unknown>
-    const provider = ["simulated", "openai", "anthropic"].includes(String(cfg.provider))
-      ? String(cfg.provider) : "simulated"
-    const current = (fund.inferenceConfig ?? {}) as Record<string, unknown>
-    if (provider === "simulated") {
-      updates.inferenceConfig = { provider, model: "surfdao-paper", endpoint: "", apiKey: "" }
-    } else {
-      const endpoint = isSafeEndpoint(cfg.endpoint) ? cfg.endpoint : current.endpoint
-      if (!isSafeEndpoint(endpoint)) {
-        return NextResponse.json({ error: "Inference endpoint must be a public https URL" }, { status: 400 })
-      }
-      // Empty key means "keep the existing encrypted key".
-      const keyInput = safeText(cfg.apiKey, 200)
-      const encryptedApiKey = keyInput ? encryptSecret(keyInput) : current.encryptedApiKey
-      if (!encryptedApiKey) {
-        return NextResponse.json({ error: "An API key is required for a custom endpoint" }, { status: 400 })
-      }
-      updates.inferenceConfig = {
-        provider,
-        model: safeText(cfg.model, 60) ?? "gpt-4o-mini",
-        endpoint,
-        encryptedApiKey,
-      }
-    }
+    const normalized = normalizeInferenceConfig(
+      body.inferenceConfig,
+      fund.inferenceConfig as any,
+    )
+    if (!normalized.ok) return NextResponse.json({ error: normalized.error }, { status: 400 })
+    updates.inferenceConfig = normalized.config
   }
   if (body.executionMode === "live" || body.executionMode === "paper") {
     if (body.executionMode === "live") {
