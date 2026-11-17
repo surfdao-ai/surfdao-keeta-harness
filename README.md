@@ -130,7 +130,9 @@ enables live trading. To actually send real value:
    API key, and model. The endpoint is SSRF-checked (https + public hosts only) and the key
    is AES-256-GCM encrypted server-side; keys are never returned to the browser. If the
    external call fails, the harness falls back to the deterministic paper simulator so the
-   loop never breaks.
+   loop never breaks. **Creators can switch provider/model/endpoint later** from the fund
+   page's "Harness settings" panel (owner only); leaving the key blank keeps the existing
+   encrypted key, and switching back to Simulated clears it.
 3. **Publish or keep as draft** — drafts are hidden from the public leaderboard and from
    allocations. The owner can Publish/Unpublish any time from the fund page; visibility is
    also patchable via `PATCH /api/funds/[slug]`.

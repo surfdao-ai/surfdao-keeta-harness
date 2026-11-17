@@ -6,6 +6,7 @@ import { getPersona } from "@/lib/agents/personas"
 import FundActions from "@/components/fund-actions"
 import LiveModeControl from "@/components/live-mode-control"
 import VaultPanel from "@/components/vault-panel"
+import InferenceSettings from "@/components/inference-settings"
 import { WaveChart } from "@/components/wave-chart"
 import Disclaimer from "@/components/disclaimer"
 import { Badge } from "@/components/ui/badge"
@@ -284,6 +285,20 @@ export default async function FundDetailPage({
             No allocations yet. Be the first to drop into this board.
           </p>
         )}
+      </div>
+
+      <div className="surfboard-card p-6">
+        <h2 className="mb-4 text-lg font-bold text-foam">Harness settings</h2>
+        <InferenceSettings
+          slug={fund.slug}
+          owner={!!isOwner}
+          config={{
+            provider: (fund.inferenceConfig as any)?.provider ?? "simulated",
+            model: (fund.inferenceConfig as any)?.model ?? "surfdao-paper",
+            hasCustomEndpoint: Boolean((fund.inferenceConfig as any)?.endpoint),
+            hasApiKey: Boolean((fund.inferenceConfig as any)?.encryptedApiKey),
+          }}
+        />
       </div>
 
       <div className="surfboard-card p-6">
