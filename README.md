@@ -118,6 +118,13 @@ vercel
 Paper mode needs no environment variables. Native Keeta bindings are externalized in
 `next.config.ts` so builds don't bundle them.
 
+**Live deployment:** [https://surfdao.vercel.app](https://surfdao.vercel.app) (deployment
+protection enabled — ask the owner for access). Source:
+[github.com/surfdao-ai/surfdao-keeta-harness](https://github.com/surfdao-ai/surfdao-keeta-harness).
+
+> Note: the zero-config store falls back to an in-memory map on Vercel's read-only
+> filesystem, so data is per-instance and ephemeral. Use Drizzle + Neon for durable data.
+
 ---
 
 ## Verification
