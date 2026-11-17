@@ -60,7 +60,7 @@ export default function LandingPage() {
                 {
                   icon: Flag,
                   title: "Shape your board",
-                  body: "Name your fund, pick investor-persona agents (Graham, Munger, Wood, Burry…), set risk parameters, and link your Keeta wallet.",
+                  body: "Name your fund, pick strategy agents (Deep Value, Disruptive Growth, Contrarian Value, Quality Moat…), set risk parameters, and link your Keeta wallet.",
                 },
                 {
                   icon: ShieldCheck,

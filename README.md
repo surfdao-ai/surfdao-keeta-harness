@@ -22,8 +22,9 @@ funded wallet and audited vault contracts.
    surf-themed leaderboard ranks (Barrel / Clean Face / Closeout), allocation "Drop in" modal.
 2. **Multi-tenant fund creation** ("Shape your board") — name, description, agent crew with
    weights, risk parameters, inference endpoint, optional Keeta wallet address.
-3. **Agent orchestrator** (`lib/agents/`) — eight investor-persona prompt templates
-   (Graham, Damodaran, Munger, Ackman, Wood, Burry, Risk Manager, Portfolio Manager) with a
+3. **Agent orchestrator** (`lib/agents/`) — eight strategy-style prompt templates
+   (Deep Value, Intrinsic Value, Quality Moat, Cash Flow Activist, Disruptive Growth,
+   Contrarian Value, Risk Manager, Portfolio Manager) with a
    deterministic paper simulator and a pluggable live-inference endpoint.
 4. **KeeSpecs / x402 safety flow** (`lib/keespecs/`) — free health check then paid-style
    status / token / convert checks with short-TTL caching, surfaced as

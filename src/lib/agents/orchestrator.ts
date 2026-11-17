@@ -48,12 +48,12 @@ function seededScore(seed: string): number {
 
 function personaBias(agentId: string): number {
   const b: Record<string, number> = {
-    graham: 5,
-    damodaran: 0,
-    munger: 8,
-    ackman: -5,
-    wood: -10,
-    burry: -8,
+    "deep-value": 5,
+    "intrinsic-value": 0,
+    "quality-moat": 8,
+    "cash-flow-activist": -5,
+    "disruptive-growth": -10,
+    "contrarian-value": -8,
     "risk-manager": -3,
     "portfolio-manager": 0,
   }

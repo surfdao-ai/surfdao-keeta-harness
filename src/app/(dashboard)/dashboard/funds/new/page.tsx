@@ -139,7 +139,7 @@ export default function NewFundPage() {
               <ShieldCheck className="h-5 w-5 text-wave-blue" />
               <h2 className="text-xl font-bold text-foam">Agent crew</h2>
             </div>
-            <p className="text-sm text-foam/60">Select investor-persona agents and set their weights. Total must equal 100%.</p>
+            <p className="text-sm text-foam/60">Select strategy-style agents and set their weights. Total must equal 100%.</p>
             <div className="space-y-2">
               {AGENT_PERSONAS.map((persona) => {
                 const selected = form.agents.find((a) => a.id === persona.id)
