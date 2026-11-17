@@ -2,17 +2,25 @@ import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { createSession, publicUser } from "@/lib/auth"
 import { hashPassword } from "@/lib/password"
+import { rateLimit } from "@/lib/rate-limit"
+import { safeText, assertSameOrigin } from "@/lib/validate"
 
 export async function POST(req: Request) {
-  const { email, name, password } = await req.json().catch(() => ({}))
-  if (!email || typeof email !== "string") {
-    return NextResponse.json({ error: "Email is required" }, { status: 400 })
+  if (!assertSameOrigin(req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local"
+  if (!rateLimit(`signup:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many attempts. Try again shortly." }, { status: 429 })
   }
-  if (!password || typeof password !== "string" || password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
+  const { email, name, password } = await req.json().catch(() => ({}))
+  if (!email || typeof email !== "string" || email.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "A valid email is required" }, { status: 400 })
+  }
+  if (!password || typeof password !== "string" || password.length < 8 || password.length > 128) {
+    return NextResponse.json({ error: "Password must be 8-128 characters" }, { status: 400 })
   }
 
   const normalized = email.toLowerCase().trim()
+  const safeName = safeText(name, 60) ?? normalized.split("@")[0]
   let user = await store.users.findByEmail(normalized)
 
   if (user?.passwordHash) {
@@ -27,12 +35,12 @@ export async function POST(req: Request) {
     // Migrate a legacy email-only account to password auth.
     user = await store.users.update(user.id, {
       passwordHash,
-      name: name || user.name || normalized.split("@")[0],
+      name: safeName || user.name || normalized.split("@")[0],
     })
   } else {
     user = await store.users.create({
       email: normalized,
-      name: name || normalized.split("@")[0],
+      name: safeName,
       passwordHash,
     })
   }

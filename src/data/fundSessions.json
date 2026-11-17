@@ -1,0 +1,108 @@
+[
+  {
+    "fundId": "aeca394c-8548-4440-916d-c1328edcd327",
+    "decisions": {
+      "weights": {
+        "deep-value": 17,
+        "intrinsic-value": 10,
+        "quality-moat": 37,
+        "risk-manager": 11,
+        "portfolio-manager": 25
+      },
+      "votes": [
+        {
+          "agentId": "deep-value",
+          "agentName": "Deep Value",
+          "score": 35,
+          "thesis": "Deep Value evaluates the current regime (2026-11-17T12:01:39.457Z). ",
+          "risks": [
+            "Market volatility",
+            "Concentration risk"
+          ],
+          "suggestedWeight": 7
+        },
+        {
+          "agentId": "intrinsic-value",
+          "agentName": "Intrinsic Value",
+          "score": 21,
+          "thesis": "Intrinsic Value evaluates the current regime (2026-11-17T12:01:39.457Z). ",
+          "risks": [
+            "Market volatility",
+            "Concentration risk"
+          ],
+          "suggestedWeight": 4
+        },
+        {
+          "agentId": "quality-moat",
+          "agentName": "Quality Moat",
+          "score": 75,
+          "thesis": "Quality Moat evaluates the current regime (2026-11-17T12:01:39.457Z). ",
+          "risks": [
+            "Market volatility",
+            "Concentration risk"
+          ],
+          "suggestedWeight": 15
+        },
+        {
+          "agentId": "risk-manager",
+          "agentName": "Risk Manager",
+          "score": 22,
+          "thesis": "Risk Manager evaluates the current regime (2026-11-17T12:01:39.457Z). ",
+          "risks": [
+            "Market volatility",
+            "Concentration risk"
+          ],
+          "suggestedWeight": 4
+        },
+        {
+          "agentId": "portfolio-manager",
+          "agentName": "Portfolio Manager",
+          "score": 52,
+          "thesis": "Portfolio Manager evaluates the current regime (2026-11-17T12:01:39.457Z). ",
+          "risks": [
+            "Market volatility",
+            "Concentration risk"
+          ],
+          "suggestedWeight": 10
+        }
+      ]
+    },
+    "checks": {
+      "condition": "clear",
+      "checks": [
+        {
+          "name": "Network status",
+          "status": "pass",
+          "detail": "Keeta mainnet reachable; settlement final."
+        },
+        {
+          "name": "Token check (USDC)",
+          "status": "pass",
+          "detail": "USDC token verified; supply and peg intact."
+        },
+        {
+          "name": "Convert check",
+          "status": "pass",
+          "detail": "Convert liquidity sufficient."
+        },
+        {
+          "name": "Counterparty risk",
+          "status": "pass",
+          "detail": "No flags on destination account."
+        }
+      ],
+      "summary": "Wave conditions: clear — proceed.",
+      "simulated": true,
+      "asOf": "2026-11-17T12:01:39.462Z"
+    },
+    "actions": {
+      "mode": "simulated",
+      "summary": "Aggregated 5 analyst votes (avg score 41/100). Wave conditions: clear — proceed."
+    },
+    "nav": 9550,
+    "returnPct": -4.5,
+    "status": "completed",
+    "id": "827abb47-4abf-4ba9-9515-631633eb3f3e",
+    "timestamp": "2026-11-17T12:01:39.464Z"
+  }
+]

@@ -50,5 +50,19 @@
     "passwordHash": "c31b1db26d38d87eb14cbfed104c2f45:66f477916e2a1de9a7da36264668d659a5b4c78d0b972984fbb7a552219879b6d521765b6de4ac83a758edfd7dc84b9e62006131a7030f76576197131f56c9fe",
     "id": "489bf81c-9446-48f0-b370-815829eac14b",
     "createdAt": "2026-11-17T11:26:02.667Z"
+  },
+  {
+    "email": "flowtest@surfdao.ai",
+    "name": "Flow Tester",
+    "passwordHash": "ac26b2a8b6fb8a35d3dfd2e2054aecb9:b3a4f3dd43dcb00cd0679dfdbe7c5ef4708b332d3c0f6396a96e77bf81ea2c8ce8161979f7d77c2ec6bd14fc5eb98fe9bc79ff178882c6e2bad66fa7abd1ee57",
+    "id": "2127faeb-7108-4aa6-a533-1350d0cb7fc7",
+    "createdAt": "2026-11-17T11:59:30.221Z"
+  },
+  {
+    "email": "sec@surfdao.ai",
+    "name": "sec",
+    "passwordHash": "486253e281ce2d8c869196ed059ce047:c0e10617690531a2ba0a459efeecfb8516af634da35bbb9eb5835280042086b455fc1a0e5e5bf94a131beac8db25d0ead79c0565d002e24638ed06ecda5c0cfc",
+    "id": "4498bee7-1212-4d45-b1bf-0995290aaedf",
+    "createdAt": "2026-11-17T12:03:12.286Z"
   }
 ]

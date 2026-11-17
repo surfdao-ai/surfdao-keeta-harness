@@ -39,6 +39,11 @@ export async function requireUser() {
   return session
 }
 
+/** For API route handlers: never redirect (fetch would receive HTML). */
+export async function getApiUser() {
+  return getSession()
+}
+
 export async function createSession(userId: string) {
   const token = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -49,7 +54,7 @@ export async function createSession(userId: string) {
     httpOnly: true,
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true" || process.env.VERCEL === "1",
     maxAge: 60 * 60 * 24 * 30,
   })
   return token
@@ -58,8 +63,16 @@ export async function createSession(userId: string) {
 export async function destroySession() {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE)?.value
-  if (token) {
-    await store.sessions.delete(token)
-    cookieStore.delete(SESSION_COOKIE)
+  if (token) await store.sessions.delete(token)
+  // Clear every mirrored cookie so a new user never inherits stale records.
+  for (const name of [
+    SESSION_COOKIE,
+    "surfdao_auth",
+    "surfdao_user",
+    "surfdao_funds",
+    "surfdao_allocs",
+    "surfdao_sessions",
+  ]) {
+    cookieStore.delete(name)
   }
 }

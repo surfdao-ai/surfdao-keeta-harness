@@ -147,6 +147,7 @@ export type Session = {
 import fs from "node:fs/promises"
 import path from "node:path"
 import { cookies } from "next/headers"
+import { signValue, unsignValue } from "@/lib/cookie-sign"
 
 const DATA_DIR = path.join(process.cwd(), "src/data")
 const FILES = {
@@ -205,7 +206,9 @@ async function readCookie<T>(name: string): Promise<T[]> {
     const jar = await cookies()
     const raw = jar.get(name)?.value
     if (!raw) return []
-    const parsed = JSON.parse(decodeURIComponent(raw))
+    const value = unsignValue(raw)
+    if (!value) return []
+    const parsed = JSON.parse(value)
     return Array.isArray(parsed) ? parsed : []
   } catch {
     return []
@@ -215,9 +218,11 @@ async function readCookie<T>(name: string): Promise<T[]> {
 async function writeCookie<T>(name: string, rows: T[]) {
   try {
     const jar = await cookies()
-    jar.set(name, encodeURIComponent(JSON.stringify(rows.slice(0, 4))), {
+    const value = signValue(JSON.stringify(rows.slice(0, 4)))
+    jar.set(name, value, {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env.COOKIE_SECURE === "true" || process.env.VERCEL === "1",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     })

@@ -158,12 +158,31 @@ function aggregate(votes: AgentVote[], mandate: typeof DEFAULT_MANDATE) {
   return { votes, weights, summary, checksPassed }
 }
 
+/* SSRF guard: only allow https URLs pointing at public hosts. */
+function isSafeEndpoint(raw: string): boolean {
+  try {
+    const url = new URL(raw)
+    if (url.protocol !== "https:") return false
+    const host = url.hostname.toLowerCase()
+    if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") || host.endsWith(".internal")) return false
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
+      const parts = host.split(".").map(Number)
+      if (parts[0] === 10 || parts[0] === 127 || parts[0] === 0 || (parts[0] === 169 && parts[1] === 254) || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168)) return false
+    }
+    if (host === "metadata.google.internal" || host === "169.254.169.254") return false
+    return true
+  } catch {
+    return false
+  }
+}
+
 /* Placeholder for a real provider call. Implement against your endpoint. */
 async function runLiveInference(
   config: { provider: string; endpoint: string; apiKey?: string },
   dataBlock: string,
   mandate: typeof DEFAULT_MANDATE,
 ): Promise<AgentVote[]> {
+  if (!isSafeEndpoint(config.endpoint)) throw new Error("Unsafe inference endpoint")
   const res = await fetch(config.endpoint, {
     method: "POST",
     headers: {

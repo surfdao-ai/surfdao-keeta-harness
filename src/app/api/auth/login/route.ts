@@ -2,8 +2,15 @@ import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { createSession, destroySession, getSession, publicUser } from "@/lib/auth"
 import { verifyPassword } from "@/lib/password"
+import { rateLimit } from "@/lib/rate-limit"
+import { assertSameOrigin } from "@/lib/validate"
 
 export async function POST(req: Request) {
+  if (!assertSameOrigin(req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local"
+  if (!rateLimit(`login:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many attempts. Try again shortly." }, { status: 429 })
+  }
   const { email, password } = await req.json().catch(() => ({}))
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 })

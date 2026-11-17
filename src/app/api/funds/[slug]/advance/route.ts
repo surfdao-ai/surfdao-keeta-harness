@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/lib/auth"
+import { getApiUser } from "@/lib/auth"
 import { store, rememberSession } from "@/lib/db/schema"
 import { orchestrate } from "@/lib/agents/orchestrator"
 import { runSafetyChecks } from "@/lib/keespecs/client"
 import { getBalances } from "@/lib/keeta/client"
+import { assertSameOrigin } from "@/lib/validate"
 
 export async function POST(
   _req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params
-  const session = await requireUser()
+  const session = await getApiUser()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!assertSameOrigin(_req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
   const fund = await store.funds.findBySlug(slug)
   if (!fund) {
     return NextResponse.json({ error: "Fund not found" }, { status: 404 })

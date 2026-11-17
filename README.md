@@ -135,6 +135,32 @@ protection enabled — ask the owner for access). Source:
 
 ---
 
+## Security & operational audit (2026-11-17)
+
+**App-level hardening applied**
+- Signed cookies (HMAC-SHA256) for every mirrored record — tampering with
+  `surfdao_user` / `surfdao_auth` can no longer impersonate another user.
+  Set `COOKIE_SECRET` in production (a dev fallback is used otherwise).
+- All mutating APIs require an authenticated session, enforce same-origin, and
+  validate/limit inputs (name 60 chars, bio 500, amount 0–1,000,000).
+- API routes return 401 JSON instead of a redirect (no HTML-in-fetch failures).
+- Rate limiting on signup (5/min/IP) and login (10/min/IP).
+- SSRF guard on inference endpoints (https + public hosts only; private/loopback
+  ranges blocked). The UI only offers known providers and never stores a URL/key.
+- `passwordHash` is stripped from all API responses and cookies; logout clears
+  every mirrored cookie.
+- `npm audit`: 0 critical. 5 high / 16 moderate are transitive advisories pinned
+  by the Keeta SDK's bundled shrinkwrap (`@google-cloud/logging` → grpc-js,
+  form-data, jws, tmp, lodash) and drizzle-kit (dev only). None are reachable
+  from the paper-trading path; npm `overrides` cannot rewrite the SDK's pinned
+  tree. Revisit when the SDK ships an updated shrinkwrap.
+
+**Operational notes**
+- `npm run build --webpack` + `npx tsc --noEmit` both pass.
+- Cookie mirroring keeps per-browser data consistent across serverless instances;
+  durable shared storage still requires Drizzle + Neon.
+- Live execution remains disabled unless `LIVE_MODE=true`.
+
 ## Verification
 
 ```bash

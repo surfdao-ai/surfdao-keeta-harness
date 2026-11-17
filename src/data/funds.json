@@ -233,5 +233,54 @@
     "isPublic": true,
     "id": "4d0f3ece-af9a-4afa-bfc3-1a886b6d5b05",
     "createdAt": "2026-11-17T00:55:41.840Z"
+  },
+  {
+    "ownerId": "2127faeb-7108-4aa6-a533-1350d0cb7fc7",
+    "name": "Flow Trading Board",
+    "description": "",
+    "slug": "flow-trading-board",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper",
+      "endpoint": "",
+      "apiKey": ""
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "aeca394c-8548-4440-916d-c1328edcd327",
+    "createdAt": "2026-11-17T12:01:06.659Z"
   }
 ]

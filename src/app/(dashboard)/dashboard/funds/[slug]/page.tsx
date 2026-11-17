@@ -21,6 +21,8 @@ export default async function FundDetailPage({
   const sessions = await store.fundSessions.byFund(fund.id)
   const allocations = await store.allocations.byFund(fund.id)
   const aum = allocations.reduce((sum, a) => sum + Number(a.amountUsdc), 0)
+  const allUsers = await store.users.list()
+  const userById = new Map(allUsers.map((u) => [u.id, u]))
 
   // build chart series
   const chartData = [...sessions].reverse().map((s, i) => ({ t: i, v: Number(s.nav) }))
@@ -100,6 +102,28 @@ export default async function FundDetailPage({
       </div>
 
       <div className="surfboard-card p-6">
+        <h2 className="text-lg font-bold text-foam mb-4">Public thesis feed</h2>
+        {latest && (latest.decisions as any)?.votes?.length ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {((latest.decisions as any).votes as any[]).slice(0, 6).map((v: any) => (
+              <div key={v.agentId} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-wave-blue">{v.agentName}</span>
+                  <Badge variant={v.score >= 50 ? "success" : "warning"}>{v.score}/100</Badge>
+                </div>
+                <p className="text-sm text-foam/90">{v.thesis}</p>
+                {v.risks?.length ? (
+                  <p className="mt-2 text-xs text-foam/70">Risks: {(v.risks as string[]).join(", ")}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-foam/70">No theses yet. Run an advance to generate agent theses.</p>
+        )}
+      </div>
+
+      <div className="surfboard-card p-6">
         <h2 className="text-lg font-bold text-foam mb-4">Recent sessions</h2>
         {sessions.length ? (
           <div className="space-y-3">
@@ -123,6 +147,50 @@ export default async function FundDetailPage({
           </div>
         ) : (
           <p className="text-sm text-foam/70">No sessions yet. Run an advance to start the loop.</p>
+        )}
+      </div>
+
+      <div className="surfboard-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foam">
+            <Users className="h-5 w-5 text-seafoam" /> Allocations
+          </h2>
+          <Badge variant="success">{allocations.length} active</Badge>
+        </div>
+        {allocations.length ? (
+          <div className="divide-y divide-white/5">
+            {[...allocations]
+              .sort((a, b) => b.allocatedAt.localeCompare(a.allocatedAt))
+              .map((a) => {
+                const allocator = userById.get(a.allocatorUserId)
+                const isMine = session?.user.id === a.allocatorUserId
+                return (
+                  <div key={a.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-wave-blue/15 text-xs font-bold text-wave-blue">
+                        {(allocator?.name ?? "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foam">
+                          {allocator?.name ?? "Unknown surfer"} {isMine && <span className="text-seafoam">(you)</span>}
+                        </div>
+                        <div className="text-xs text-foam/70">
+                          {new Date(a.allocatedAt).toLocaleString()} · {a.keetaTxHash ? "on-chain" : "paper"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="font-bold text-seafoam">${Number(a.amountUsdc).toLocaleString()}</div>
+                      <div className="text-xs text-foam/70 capitalize">{a.status}</div>
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        ) : (
+          <p className="text-sm text-foam/70">
+            No allocations yet. Be the first to drop into this board.
+          </p>
         )}
       </div>
 
