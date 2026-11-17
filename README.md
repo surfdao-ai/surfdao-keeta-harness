@@ -201,6 +201,23 @@ protection enabled — ask the owner for access). Source:
 
 ---
 
+## Data accuracy
+
+- **NAV** starts at 10,000 + capital allocated since the last session; each advance applies
+  the return produced by the fund's own selected assets (stablecoins stay near their peg,
+  volatile assets move in a deterministic per-session walk).
+- **AUM / allocators** are derived live from non-withdrawn allocations; distinct allocator
+  counts are unique users, not allocation rows.
+- **Total return** is compounded from stored per-session returns, so a new allocation never
+  appears as "performance". Fund cards, leaderboard, dashboard, and profile all use the same
+  `fundStats()` helper.
+- **Performance wave** plots only real stored NAV points — no synthetic data when a fund has
+  no sessions. All session lists are sorted newest-first at the store level.
+- Sessions appear on the dashboard (recent) and in Profile → Activity, with NAV and return.
+
+The in-app **Execution mode** banner links to `/dashboard/live-mode`, a dedicated page that
+explains paper vs live and the five steps to enable real execution.
+
 ## Security & operational audit (2026-11-17)
 
 **App-level hardening applied**

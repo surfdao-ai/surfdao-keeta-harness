@@ -78,5 +78,12 @@
     "passwordHash": "11efc89b9c6a51fcc002b22c33499124:0650e3806e263e01b3a5f500bc15bfe8e977c9bf235f16ff4ffa8278222de32a8099f2b2a67f2beafe6588c14d02b82e226b9120ec4292e850a8f8a27e7dffae",
     "id": "8a0bb065-0742-4169-ad91-c511e64fd09c",
     "createdAt": "2026-11-17T12:47:44.978Z"
+  },
+  {
+    "email": "accuracy@surfdao.ai",
+    "name": "accuracy",
+    "passwordHash": "d129b534fabecad9bc2dbc96e2a1ad3e:a3e636debbec929b515e1388b4bd68986b428afeac3e9a4b3cccd1efc28a493c74d319deb4cffa7f54d2b002bb96575497f665e1a74f1396d776b964e1830d68",
+    "id": "41999dc4-af28-473b-839d-2a7431674483",
+    "createdAt": "2026-11-17T13:26:59.357Z"
   }
 ]

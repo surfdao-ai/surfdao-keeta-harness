@@ -25,5 +25,14 @@
     "status": "pending",
     "id": "20157f4b-c7ea-4fdc-997b-441745f70750",
     "allocatedAt": "2026-11-17T12:00:05.406Z"
+  },
+  {
+    "fundId": "48e9930c-2418-4242-9741-e789fc4dbce6",
+    "allocatorUserId": "41999dc4-af28-473b-839d-2a7431674483",
+    "amountUsdc": 500,
+    "keetaTxHash": null,
+    "status": "pending",
+    "id": "b3c37765-09c8-4ae7-bd9c-61433511ab9f",
+    "allocatedAt": "2026-11-17T13:27:01.846Z"
   }
 ]

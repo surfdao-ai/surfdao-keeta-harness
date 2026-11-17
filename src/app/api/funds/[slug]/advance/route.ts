@@ -5,7 +5,7 @@ import { orchestrate } from "@/lib/agents/orchestrator"
 import { runSafetyChecks } from "@/lib/keespecs/client"
 import { getBalances } from "@/lib/keeta/client"
 import { assertSameOrigin } from "@/lib/validate"
-import { getPrices, CURATED_ASSETS } from "@/lib/assets/keeta-assets"
+import { getMarketSnapshot, CURATED_ASSETS } from "@/lib/assets/keeta-assets"
 
 export async function POST(
   _req: Request,
@@ -25,18 +25,12 @@ export async function POST(
       symbol: a.symbol, name: a.name, address: a.address, weight: 50, color: a.color,
     }))
   const symbols = assets.map((a) => a.symbol)
-  const prices = await getPrices(symbols)
+  const priorSessions = await store.fundSessions.byFund(fund.id)
+  const market = await getMarketSnapshot(symbols, priorSessions.length)
+  const prices = market.prices
 
   const balances = await getBalances(fund.keetaWalletAddress || session.user.keetaAddress || "demo")
   const cash = balances.find((b) => b.token === "USDC")?.amount ?? 10000
-
-  // Market snapshot for the agent harness, built from the fund's own universe.
-  const market = {
-    prices,
-    changes24h: Object.fromEntries(symbols.map((s, i) => [s, Math.sin(i * 1.7 + Date.now() / 1e10) * 6])),
-    volume: Object.fromEntries(symbols.map((s, i) => [s, 1e6 * (i + 1)])),
-    asOf: new Date().toISOString(),
-  }
 
   const result = await orchestrate({
     mandate: fund.mandate as any,
@@ -53,26 +47,39 @@ export async function POST(
     action: "advance",
   })
 
-  // Blend each asset's mandate weight with the harness target from the PM vote.
+  // NAV = prior performance + any new capital allocated since the last session.
   const assetWeights = result.assetWeights
-  const lastSession = (await store.fundSessions.byFund(fund.id))[0]
-  const prevNav = lastSession ? Number(lastSession.nav) : 10000
+  const lastSession = priorSessions[0]
+  const allocations = await store.allocations.byFund(fund.id)
+  const aum = allocations.reduce((sum, a) => sum + Number(a.amountUsdc), 0)
+  const aumAtLastSession = lastSession ? Number((lastSession.actions as any)?.aum ?? 0) : 0
+  const newCapital = Math.max(0, aum - aumAtLastSession)
+  const prevNav = (lastSession ? Number(lastSession.nav) : 10000) + newCapital
+
+  // Return is driven only by the price moves of the assets the harness actually holds.
   const weightedChange = assets.reduce((sum, a) => {
     const change = market.changes24h[a.symbol] ?? 0
-    return sum + (assetWeights[a.symbol] ?? a.weight) / 100 * (change / 100) * 0.25
+    return sum + ((assetWeights[a.symbol] ?? a.weight) / 100) * (change / 100)
   }, 0)
-  const returnPct = Math.max(-10, Math.min(10, weightedChange))
+  const returnPct = Math.max(-25, Math.min(25, weightedChange))
   const nav = prevNav * (1 + returnPct)
 
   const createdSession = await store.fundSessions.create({
     fundId: fund.id,
-    decisions: { weights: result.weights, assetWeights, votes: result.votes, holdings: assets.map((a) => ({
-      symbol: a.symbol,
-      targetWeight: assetWeights[a.symbol] ?? a.weight,
-      priceUsd: prices[a.symbol],
-    })) },
+    decisions: {
+      weights: result.weights,
+      assetWeights,
+      votes: result.votes,
+      holdings: assets.map((a) => ({
+        symbol: a.symbol,
+        configuredWeight: a.weight,
+        targetWeight: assetWeights[a.symbol] ?? a.weight,
+        priceUsd: prices[a.symbol],
+        change24h: market.changes24h[a.symbol] ?? 0,
+      })),
+    },
     checks,
-    actions: { mode: result.mode, summary: result.summary, assets: symbols },
+    actions: { mode: result.mode, summary: result.summary, assets: symbols, aum, newCapital, prices: market.prices },
     nav: Math.round(nav * 100) / 100,
     returnPct: Math.round(returnPct * 10000) / 100,
     status: "completed",
@@ -91,5 +98,8 @@ export async function POST(
     weights: result.weights,
     assetWeights,
     prices,
+    aum,
+    newCapital,
+    sessionIndex: priorSessions.length,
   })
 }

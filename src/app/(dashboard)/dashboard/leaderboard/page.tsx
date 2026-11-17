@@ -10,7 +10,7 @@ export default async function LeaderboardPage() {
   const allocations = await store.allocations.list()
 
   const byFund = new Map<string, typeof sessions>()
-  for (const s of sessions) {
+  for (const s of [...sessions].sort((a, b) => b.timestamp.localeCompare(a.timestamp))) {
     const arr = byFund.get(s.fundId) ?? []
     arr.push(s)
     byFund.set(s.fundId, arr)
@@ -28,7 +28,9 @@ export default async function LeaderboardPage() {
     .map((f) => {
       const fs = byFund.get(f.id) ?? []
       const latest = fs[0]
-      const totalReturn = latest ? Number(latest.returnPct ?? 0) : 0
+      const totalReturn = fs.length
+        ? (fs.reduce((acc, s) => acc * (1 + Number(s.returnPct ?? 0) / 100), 1) - 1) * 100
+        : 0
       const rets = fs.slice(0, 10).map((s) => Number(s.returnPct ?? 0))
       const mean = rets.length ? rets.reduce((a, b) => a + b, 0) / rets.length : 0
       const variance = rets.length ? rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length : 0

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { getSession } from "@/lib/auth"
 import { store } from "@/lib/db/schema"
+import { fundStats } from "@/lib/fund-helpers"
 import { getPersona } from "@/lib/agents/personas"
 import FundActions from "@/components/fund-actions"
 import { WaveChart } from "@/components/wave-chart"
@@ -18,19 +19,25 @@ export default async function FundDetailPage({
   if (!fund) notFound()
   const session = await getSession()
   const isOwner = session?.user.id === fund.ownerId
-  const sessions = await store.fundSessions.byFund(fund.id)
-  const allocations = await store.allocations.byFund(fund.id)
-  const aum = allocations.reduce((sum, a) => sum + Number(a.amountUsdc), 0)
-  const allUsers = await store.users.list()
+  const [allSessions, allAllocations, allUsers] = await Promise.all([
+    store.fundSessions.list(),
+    store.allocations.list(),
+    store.users.list(),
+  ])
+  const stats = fundStats(fund, allSessions, allAllocations)
+  const sessions = allSessions
+    .filter((s) => s.fundId === fund.id)
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+  const allocations = allAllocations.filter(
+    (a) => a.fundId === fund.id && a.status !== "withdrawn",
+  )
+  const aum = stats.aum
   const userById = new Map(allUsers.map((u) => [u.id, u]))
 
-  // build chart series
+  // Real NAV history only — never fabricate points for an empty fund.
   const chartData = [...sessions].reverse().map((s, i) => ({ t: i, v: Number(s.nav) }))
-  if (chartData.length === 0) {
-    for (let i = 0; i < 8; i++) chartData.push({ t: i, v: 10000 + Math.sin(i) * 120 })
-  }
   const latest = sessions[0]
-  const totalReturn = latest ? Number(latest.returnPct ?? 0) : 0
+  const totalReturn = stats.totalReturn
   const mandate = fund.mandate as { agents: { id: string; weight: number }[] }
 
   return (
@@ -58,8 +65,13 @@ export default async function FundDetailPage({
           </div>
           <div className="text-2xl font-bold text-foam">${Number(latest?.nav ?? 10000).toLocaleString()}</div>
           <div className={`text-sm font-medium mt-1 ${totalReturn >= 0 ? "text-seafoam" : "text-red-400"}`}>
-            {totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}% last session
+            {totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}% all-time
           </div>
+          {latest && (
+            <div className={`text-xs mt-0.5 ${Number(latest.returnPct) >= 0 ? "text-seafoam/80" : "text-red-400/80"}`}>
+              {Number(latest.returnPct) >= 0 ? "+" : ""}{Number(latest.returnPct).toFixed(2)}% last session
+            </div>
+          )}
         </div>
         <div className="surfboard-card p-5">
           <div className="flex items-center gap-2 text-xs font-medium text-foam/70 uppercase tracking-wider mb-3">
@@ -96,13 +108,19 @@ export default async function FundDetailPage({
                         <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.color }} />
                         {a.symbol} <span className="font-normal text-foam/70">{a.name}</span>
                       </span>
-                      <span className="text-foam/80">{target != null ? `${target}%` : `${a.weight}%`}</span>
+                      <span className="text-foam/80">set {a.weight}% · target {target ?? a.weight}%</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                       <div className="h-full rounded-full" style={{ width: `${target ?? a.weight}%`, background: a.color }} />
                     </div>
-                    <div className="mt-1.5 text-[10px] text-foam/60">
-                      {a.address ? `${a.address.slice(0, 12)}…` : "Base asset"}
+                    <div className="mt-1.5 flex justify-between text-[10px] text-foam/70">
+                      <span>{a.address ? `${a.address.slice(0, 12)}…` : "Keeta base asset"}</span>
+                      {(latest?.decisions as any)?.holdings?.find((h: any) => h.symbol === a.symbol)?.change24h != null && (
+                        <span>
+                          {((latest.decisions as any).holdings.find((h: any) => h.symbol === a.symbol).change24h >= 0 ? "+" : "")}
+                          {(latest.decisions as any).holdings.find((h: any) => h.symbol === a.symbol).change24h.toFixed(2)}% last session
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
@@ -126,8 +144,16 @@ export default async function FundDetailPage({
       <div className="grid md:grid-cols-2 gap-4">
         <div className="surfboard-card p-6">
           <h2 className="text-lg font-bold text-foam mb-4">Performance wave</h2>
-          <WaveChart data={chartData} />
-          <p className="text-xs text-foam/60 mt-3">Simulated NAV across paper sessions.</p>
+          {chartData.length > 1 ? (
+            <WaveChart data={chartData} />
+          ) : (
+            <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-foam/70">
+              {chartData.length === 1 ? "One session so far — run more to see the wave" : "No sessions yet — run an advance to plot NAV"}
+            </div>
+          )}
+          <p className="mt-3 text-xs text-foam/70">
+            {chartData.length} recorded session{chartData.length === 1 ? "" : "s"} · real stored NAV, no simulated points.
+          </p>
         </div>
         <div className="surfboard-card p-6">
           <h2 className="text-lg font-bold text-foam mb-4">Agent scorecard</h2>

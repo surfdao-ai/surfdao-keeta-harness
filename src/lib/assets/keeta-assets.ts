@@ -92,6 +92,39 @@ export async function getPrices(symbols: string[]): Promise<Record<string, numbe
   return out
 }
 
+export type MarketSnapshot = {
+  prices: Record<string, number>
+  changes24h: Record<string, number>
+  volume: Record<string, number>
+  asOf: string
+  sessionIndex: number
+}
+
+/* Deterministic per-symbol session walk. Each session produces a distinct but
+   reproducible move, so stored NAV/return data reflects the fund's own assets. */
+export async function getMarketSnapshot(symbols: string[], sessionIndex: number): Promise<MarketSnapshot> {
+  const base = await getPrices(symbols)
+  const prices: Record<string, number> = {}
+  const changes24h: Record<string, number> = {}
+  const volume: Record<string, number> = {}
+  const stablePattern = /^(USDC|USDT|EURC|EUR|DAI|KB[A-Z]+|K[A-Z]{3}|[A-Z]{3})$/
+  symbols.forEach((s, i) => {
+    const seed = `${s}:${sessionIndex}:${i}`
+    let h = 2166136261
+    for (const c of seed) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) }
+    const r1 = ((h >>> 0) % 2000) / 1000 - 1          // -1 .. 1
+    const r2 = ((Math.abs(h >>> 7) % 2000) / 1000 - 1) // -1 .. 1
+    const isStable = stablePattern.test(s.toUpperCase())
+    const raw = r1 * 7 + r2 * 4                        // roughly -11 .. 11
+    // Fiat-backed tokens stay within a tight band of their peg.
+    const change = Math.round((isStable ? Math.max(-0.4, Math.min(0.4, raw / 20)) : raw) * 100) / 100
+    changes24h[s] = change
+    prices[s] = Math.round(base[s] * (1 + change / 100) * 1e6) / 1e6
+    volume[s] = Math.round(Math.abs(r2) * 5e6 + 5e5)
+  })
+  return { prices, changes24h, volume, asOf: new Date().toISOString(), sessionIndex }
+}
+
 export function assetColor(symbol: string): string {
   return getAssetUniverseSync().find((a) => a.symbol === symbol)?.color ?? "#64748B"
 }

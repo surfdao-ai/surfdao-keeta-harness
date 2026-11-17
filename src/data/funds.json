@@ -414,5 +414,71 @@
     "publishedAt": "2026-11-17T12:47:46.304Z",
     "id": "ed276e92-d40c-4426-ba2b-4e7dd186f31e",
     "createdAt": "2026-11-17T12:47:45.408Z"
+  },
+  {
+    "ownerId": "41999dc4-af28-473b-839d-2a7431674483",
+    "name": "Accuracy Board",
+    "description": "",
+    "slug": "accuracy-board",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper",
+      "endpoint": "",
+      "apiKey": ""
+    },
+    "assets": [
+      {
+        "symbol": "USDC",
+        "name": "USD Coin",
+        "address": "keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna",
+        "weight": 70,
+        "color": "#2775CA"
+      },
+      {
+        "symbol": "KTA",
+        "name": "Keeta",
+        "address": null,
+        "weight": 30,
+        "color": "#3B82F6"
+      }
+    ],
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "publishedAt": "2026-11-17T13:27:01.294Z",
+    "id": "48e9930c-2418-4242-9741-e789fc4dbce6",
+    "createdAt": "2026-11-17T13:27:01.294Z"
   }
 ]

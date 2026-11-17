@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const allocations = await store.allocations.list()
 
   const byFund = new Map<string, typeof sessions>()
-  for (const s of sessions) {
+  for (const s of [...sessions].sort((a, b) => b.timestamp.localeCompare(a.timestamp))) {
     const arr = byFund.get(s.fundId) ?? []
     arr.push(s)
     byFund.set(s.fundId, arr)
@@ -32,7 +32,9 @@ export async function GET(req: Request) {
     .map((f) => {
       const fundSessions = byFund.get(f.id) ?? []
       const latest = fundSessions[0]
-      const totalReturn = latest ? Number(latest.returnPct ?? 0) : 0
+      const totalReturn = fundSessions.length
+        ? (fundSessions.reduce((acc, s) => acc * (1 + Number(s.returnPct ?? 0) / 100), 1) - 1) * 100
+        : 0
       const nav = latest ? Number(latest.nav) : 10000
       const aum = allocByFund.get(f.id) ?? 0
       const allocators = allocCountByFund.get(f.id) ?? 0

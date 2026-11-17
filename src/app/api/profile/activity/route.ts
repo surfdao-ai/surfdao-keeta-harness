@@ -18,7 +18,9 @@ export async function GET() {
     .filter((f) => f.ownerId === userId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((f) => {
-      const fundSessions = allSessions.filter((s) => s.fundId === f.id)
+      const fundSessions = allSessions
+        .filter((s) => s.fundId === f.id)
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
       const aum = allAllocations
         .filter((a) => a.fundId === f.id && a.status !== "withdrawn")
         .reduce((sum, a) => sum + Number(a.amountUsdc), 0)

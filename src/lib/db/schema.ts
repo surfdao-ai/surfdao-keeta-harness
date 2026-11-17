@@ -361,6 +361,7 @@ export const store = {
       const cookieSessions = await readCookie<FundSession>(SESSION_COOKIE)
       const ids = new Set(disk.map((s) => s.id))
       return [...cookieSessions.filter((s) => !ids.has(s.id)), ...disk]
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
     },
     byFund: async (fundId: string) => {
       const rows = await store.fundSessions.list()
