@@ -291,9 +291,18 @@ explains paper vs live and the five steps to enable real execution.
 ## Verification
 
 ```bash
+npm test             # 35 Vitest unit tests (money math, validators, crypto, SSRF, readiness)
 npx tsc --noEmit     # type check
+npm run lint         # ESLint
 npm run build        # production build
 ```
+
+Unit tests live in `tests/unit/` and cover the highest-risk logic: fund stats/return
+compounding, agent weight normalization, asset price simulation (stablecoin peg),
+password/cookie/API-key crypto, SSRF and input validation, and live-mode readiness.
+
+`.github/workflows/ci.yml` runs install → lint → typecheck → tests → build on every push
+and PR to `master`/`main`.
 
 ---
 

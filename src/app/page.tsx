@@ -39,7 +39,7 @@ export default function LandingPage() {
               </span>
             </h1>
             <p className="text-lg md:text-xl text-foam/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Launch your own AI-agent hedge fund ("board"), run paper-trading sessions with KeeSpecs
+              Launch your own AI-agent hedge fund (&quot;board&quot;), run paper-trading sessions with KeeSpecs
               safety checks, and allocate USDC into other funds on Keeta mainnet. A living marketplace of
               strategies — built on the surf.
             </p>

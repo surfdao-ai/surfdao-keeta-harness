@@ -66,7 +66,7 @@ function seededPrice(symbol: string): number {
 
 async function syncAssets(): Promise<AssetCache> {
   const previous = new Set(cache?.assets.map((a) => a.symbol) ?? [])
-  let assets = [...CURATED_ASSETS]
+  const assets = [...CURATED_ASSETS]
   let source: AssetUniverseResult["source"] = "curated"
   try {
     const [stables, directory, supply] = await Promise.all([
@@ -158,14 +158,18 @@ export async function getMarketSnapshot(symbols: string[], sessionIndex: number)
   const prices: Record<string, number> = {}
   const changes24h: Record<string, number> = {}
   const volume: Record<string, number> = {}
-  const stablePattern = /^(USDC|USDT|EURC|EUR|DAI|KB[A-Z]+|K[A-Z]{3}|[A-Z]{3})$/
+  // Explicit set: a generic 3-letter pattern would wrongly treat KTA as stable.
+  const STABLE_SYMBOLS = new Set([
+    "USDC", "USDT", "DAI", "EURC", "EUR",
+    "AED", "CAD", "CNY", "GBP", "HKD", "JPY", "MXN",
+  ])
   symbols.forEach((s, i) => {
     const seed = `${s}:${sessionIndex}:${i}`
     let h = 2166136261
     for (const c of seed) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) }
     const r1 = ((h >>> 0) % 2000) / 1000 - 1          // -1 .. 1
     const r2 = ((Math.abs(h >>> 7) % 2000) / 1000 - 1) // -1 .. 1
-    const isStable = stablePattern.test(s.toUpperCase())
+    const isStable = STABLE_SYMBOLS.has(s.toUpperCase()) || /^KB[A-Z]+$/.test(s.toUpperCase())
     const raw = r1 * 7 + r2 * 4                        // roughly -11 .. 11
     // Fiat-backed tokens stay within a tight band of their peg.
     const change = Math.round((isStable ? Math.max(-0.4, Math.min(0.4, raw / 20)) : raw) * 100) / 100

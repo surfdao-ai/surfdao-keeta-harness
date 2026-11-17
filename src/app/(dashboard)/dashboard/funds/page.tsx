@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth"
 import { store } from "@/lib/db/schema"
 import { fundStats, publicFund } from "@/lib/fund-helpers"
+import Link from "next/link"
 import FundCard from "@/components/fund-card"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
@@ -20,7 +21,7 @@ export default async function MyFundsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-foam">My funds</h1>
         <Button asChild>
-          <a href="/dashboard/funds/new"><Plus className="mr-2 h-4 w-4" /> Shape a board</a>
+          <Link href="/dashboard/funds/new"><Plus className="mr-2 h-4 w-4" /> Shape a board</Link>
         </Button>
       </div>
 
@@ -45,7 +46,7 @@ export default async function MyFundsPage() {
           <Plus className="mx-auto mb-4 h-10 w-10 text-foam/30" />
           <h3 className="mb-2 text-lg font-bold text-foam">No funds yet</h3>
           <p className="mb-6 text-sm text-foam/70">Shape your first board to start paper trading.</p>
-          <Button asChild><a href="/dashboard/funds/new">Create a fund</a></Button>
+          <Button asChild><Link href="/dashboard/funds/new">Create a fund</Link></Button>
         </div>
       )}
     </div>

@@ -179,9 +179,18 @@ function aggregate(votes: AgentVote[], mandate: typeof DEFAULT_MANDATE) {
     weights[v.agentId] = Math.round(weight * share * 100) / 100
   }
 
-  // normalize to 100
+  // Normalize to exactly 100: round first, then absorb any remainder into the
+  // largest weight so displayed allocations never sum to 99 or 101.
   const wSum = Object.values(weights).reduce((a, b) => a + b, 0)
-  for (const k of Object.keys(weights)) weights[k] = Math.round((weights[k] / wSum) * 100)
+  if (wSum > 0) {
+    const keys = Object.keys(weights)
+    keys.forEach((k) => { weights[k] = Math.round((weights[k] / wSum) * 100) })
+    const diff = 100 - keys.reduce((a, k) => a + weights[k], 0)
+    if (diff !== 0) {
+      const largest = keys.reduce((best, k) => (weights[k] > weights[best] ? k : best), keys[0])
+      weights[largest] += diff
+    }
+  }
 
   const avgScore = votes.length ? (votes.reduce((a, b) => a + b.score, 0) / votes.length) : 0
   const checksPassed = avgScore >= 40

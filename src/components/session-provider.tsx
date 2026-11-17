@@ -30,11 +30,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  React.useEffect(() => {
-    loadSession()
-  }, [])
-
-  async function loadSession() {
+  const loadSession = React.useCallback(async () => {
     try {
       const res = await fetch("/api/auth/login", { credentials: "include" })
       if (res.ok) {
@@ -46,7 +42,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  React.useEffect(() => {
+    loadSession()
+  }, [loadSession])
 
   async function signIn(
     user: { email: string; password: string; name?: string },
