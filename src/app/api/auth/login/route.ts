@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
-import { createSession, destroySession, getSession } from "@/lib/auth"
+import { createSession, destroySession, getSession, publicUser } from "@/lib/auth"
 import { verifyPassword } from "@/lib/password"
 
 export async function POST(req: Request) {
@@ -22,14 +22,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 })
   }
   await createSession(user.id)
-  return NextResponse.json({ ok: true, user })
+  return NextResponse.json({ ok: true, user: publicUser(user) })
 }
 
 export async function GET() {
   const session = await getSession()
   // 200 with ok:false avoids noisy 401s for visitors who aren't signed in.
   if (!session) return NextResponse.json({ ok: false, user: null })
-  return NextResponse.json({ ok: true, user: session.user })
+  return NextResponse.json({ ok: true, user: publicUser(session.user) })
 }
 
 export async function DELETE() {

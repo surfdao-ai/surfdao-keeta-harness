@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { requireUser } from "@/lib/auth"
+import { requireUser, publicUser } from "@/lib/auth"
 import { store, rememberUser } from "@/lib/db/schema"
 
 const ALLOWED = [
@@ -15,7 +15,7 @@ const ALLOWED = [
 
 export async function GET() {
   const session = await requireUser()
-  return NextResponse.json({ user: session.user })
+  return NextResponse.json({ user: publicUser(session.user) })
 }
 
 export async function PUT(req: Request) {
@@ -28,5 +28,5 @@ export async function PUT(req: Request) {
   const updated = await store.users.update(session.user.id, updates)
   if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 })
   await rememberUser(updated)
-  return NextResponse.json({ ok: true, user: updated })
+  return NextResponse.json({ ok: true, user: publicUser(updated) })
 }

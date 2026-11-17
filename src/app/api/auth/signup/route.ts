@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
-import { createSession } from "@/lib/auth"
+import { createSession, publicUser } from "@/lib/auth"
 import { hashPassword } from "@/lib/password"
 
 export async function POST(req: Request) {
@@ -39,5 +39,5 @@ export async function POST(req: Request) {
 
   if (!user) return NextResponse.json({ error: "Could not create account" }, { status: 500 })
   await createSession(user.id)
-  return NextResponse.json({ ok: true, user })
+  return NextResponse.json({ ok: true, user: publicUser(user) })
 }

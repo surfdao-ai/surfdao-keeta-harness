@@ -12,6 +12,12 @@ import { store } from "@/lib/db/schema"
 
 const SESSION_COOKIE = "surfdao_session"
 
+/** Strip sensitive fields before sending a user to the client. */
+export function publicUser<T extends { passwordHash?: string }>(user: T) {
+  const { passwordHash: _passwordHash, ...safe } = user
+  return safe
+}
+
 export async function getSession() {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE)?.value

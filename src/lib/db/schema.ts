@@ -241,7 +241,8 @@ export async function rememberSession(session: FundSession) {
 }
 
 export async function rememberUser(user: User) {
-  await writeCookie(USER_COOKIE, [user])
+  const { passwordHash: _passwordHash, ...safe } = user
+  await writeCookie(USER_COOKIE, [safe])
 }
 
 export const store = {
