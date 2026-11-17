@@ -109,7 +109,7 @@ export default function DashboardLayout({
               <span className="text-xs font-medium text-seafoam">Paper trading • Keeta test harness</span>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/dashboard/leaderboard" className="text-xs font-medium text-foam/90 underline-offset-4 transition hover:text-foam">
+              <Link href="/dashboard/leaderboard" className="hidden text-xs font-medium text-foam/90 underline-offset-4 transition hover:text-foam sm:inline">
                 Public Leaderboard
               </Link>
               <button

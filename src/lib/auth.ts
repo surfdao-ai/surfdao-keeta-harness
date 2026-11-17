@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { store } from "@/lib/db/schema"
+import { store, rememberAuthSession } from "@/lib/db/schema"
 
 /* --------------------------------------------------------------------------
    SurfDAO.ai — Dev session auth (zero-config MVP)
@@ -42,7 +42,8 @@ export async function requireUser() {
 export async function createSession(userId: string) {
   const token = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  await store.sessions.create({ userId, token, expiresAt })
+  const session = await store.sessions.create({ userId, token, expiresAt })
+  await rememberAuthSession(session)
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,

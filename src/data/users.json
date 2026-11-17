@@ -43,5 +43,12 @@
     "favoriteStrategies": [
       "intrinsic-value"
     ]
+  },
+  {
+    "email": "mobile@surfdao.ai",
+    "name": "Mobile Tester",
+    "passwordHash": "c31b1db26d38d87eb14cbfed104c2f45:66f477916e2a1de9a7da36264668d659a5b4c78d0b972984fbb7a552219879b6d521765b6de4ac83a758edfd7dc84b9e62006131a7030f76576197131f56c9fe",
+    "id": "489bf81c-9446-48f0-b370-815829eac14b",
+    "createdAt": "2026-11-17T11:26:02.667Z"
   }
 ]

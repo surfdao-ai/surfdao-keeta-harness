@@ -66,7 +66,18 @@ export default function ProfilePage() {
   }
 
   if (loading) return <p className="text-foam/80">Loading profile…</p>
-  if (!user) return null
+  if (!user) {
+    return (
+      <div className="surfboard-card mx-auto max-w-md p-8 text-center">
+        <UserRound className="mx-auto mb-4 h-10 w-10 text-wave-blue" />
+        <h1 className="text-xl font-bold text-foam">Sign in to view your profile</h1>
+        <p className="mt-2 text-sm text-foam/80">Your surfer profile is tied to your account.</p>
+        <Button asChild className="mt-6">
+          <a href="/login">Sign in</a>
+        </Button>
+      </div>
+    )
+  }
 
   const initial = (form.name || user.email || "U").charAt(0).toUpperCase()
 

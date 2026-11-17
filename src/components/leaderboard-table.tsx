@@ -1,15 +1,16 @@
 "use client"
 
-import { Medal, Waves, ShieldCheck, TrendingUp, Users, DollarSign } from "lucide-react"
+import { Medal, Trophy, Users, DollarSign, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 type RankStyle = { label: string; color: string; bg: string; border: string }
 
 const RANK_STYLES: RankStyle[] = [
-  { label: "Barrel", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" }, // 1st
-  { label: "Clean Face", color: "text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/30" }, // 2nd
-  { label: "Closeout", color: "text-seafoam/80", bg: "bg-seafoam/10", border: "border-seafoam/30" }, // 3rd
-  { label: "Inside", color: "text-foam/80", bg: "bg-white/5", border: "border-white/10" }, // rest
+  { label: "Barrel", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
+  { label: "Clean Face", color: "text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/30" },
+  { label: "Closeout", color: "text-seafoam", bg: "bg-seafoam/10", border: "border-seafoam/30" },
+  { label: "Inside", color: "text-foam/80", bg: "bg-white/5", border: "border-white/10" },
 ]
 
 export type LeaderboardRow = {
@@ -28,25 +29,63 @@ export type LeaderboardRow = {
 
 export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
   return (
-    <div className="surfboard-card p-0">
-      <div className="border-b border-white/5 bg-ocean-800/40 px-6 py-4">
-        <h2 className="text-lg font-bold text-foam">Leaderboard</h2>
-        <p className="text-xs text-foam/70 mt-1">
-          Ranked by composite score: return, consistency, and AUM growth.{" "}
+    <div className="surfboard-card min-w-0 overflow-hidden">
+      <div className="border-b border-white/5 bg-ocean-800/40 px-4 py-4 lg:px-6">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-foam">
+          <Trophy className="h-5 w-5 text-yellow-400" /> Leaderboard
+        </h2>
+        <p className="mt-1 text-xs text-foam/80">
+          Composite score: return, consistency, and AUM growth.{" "}
           <span className="text-seafoam">Paper trading results.</span>
         </p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+
+      {/* Mobile: stacked cards (no horizontal overflow) */}
+      <div className="divide-y divide-white/5 md:hidden">
+        {rows.map((row) => {
+          const style = RANK_STYLES[Math.min(row.rank - 1, 3)]
+          const isUp = row.totalReturn >= 0
+          return (
+            <a key={row.slug} href={`/dashboard/funds/${row.slug}`} className="block p-4 transition hover:bg-white/5">
+              <div className="flex items-center gap-3">
+                <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold", style.bg, style.border, style.color)}>
+                  {row.rank <= 3 ? <Medal className="h-4 w-4" /> : row.rank}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-foam">{row.name}</div>
+                  <div className="truncate text-xs text-foam/70">
+                    {style.label} • {row.ownerId.slice(0, 6)}…{row.ownerId.slice(-4)}
+                  </div>
+                </div>
+                <div className={cn("shrink-0 text-right font-bold", isUp ? "text-seafoam" : "text-red-400")}>
+                  {isUp ? "+" : ""}{row.totalReturn.toFixed(1)}%
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-4 text-xs text-foam/80">
+                <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />${row.aum.toLocaleString()}</span>
+                <span className="flex items-center gap-1"><Users className="h-3 w-3" />{row.allocators}</span>
+                <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />{row.consistency.toFixed(0)}</span>
+                <Badge variant={row.status === "live" ? "success" : "default"} className="ml-auto">
+                  {row.status === "live" ? "Live" : "Paper"}
+                </Badge>
+              </div>
+            </a>
+          )
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden w-full overflow-x-auto md:block">
+        <table className="w-full table-fixed text-sm">
           <thead>
             <tr className="border-b border-white/5">
-              <th className="text-left px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Rank</th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Fund</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Return</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Consistency</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">AUM</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Allocators</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Status</th>
+              <th className="w-20 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foam/70">Rank</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-foam/70">Fund</th>
+              <th className="w-24 px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-foam/70">Return</th>
+              <th className="w-28 px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-foam/70">Consistency</th>
+              <th className="w-24 px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-foam/70">AUM</th>
+              <th className="w-24 px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-foam/70">Allocators</th>
+              <th className="w-20 px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-foam/70">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -54,38 +93,29 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
               const style = RANK_STYLES[Math.min(row.rank - 1, 3)]
               const isUp = row.totalReturn >= 0
               return (
-                <tr
-                  key={row.slug}
-                  className="border-b border-white/5 hover:bg-white/3 transition group"
-                >
-                  <td className="px-6 py-4">
+                <tr key={row.slug} className="border-b border-white/5 transition hover:bg-white/5">
+                  <td className="px-4 py-4">
                     {row.rank <= 3 ? (
-                      <Medal className="h-5 w-5 shrink-0" style={{ color: style.color }} />
+                      <Medal className="h-5 w-5" style={{ color: style.color }} />
                     ) : (
-                      <div className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${style.bg} ${style.border} ${style.color}`}>
+                      <div className={cn("flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold", style.bg, style.border, style.color)}>
                         {row.rank}
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-foam">{row.name}</div>
-                    <div className="text-xs text-foam/70">{row.ownerId.slice(0, 6)}…{row.ownerId.slice(-4)}</div>
+                  <td className="px-4 py-4">
+                    <a href={`/dashboard/funds/${row.slug}`} className="font-medium text-foam hover:text-wave-blue">
+                      <div className="truncate">{row.name}</div>
+                      <div className="truncate text-xs text-foam/70">{row.ownerId.slice(0, 6)}…{row.ownerId.slice(-4)}</div>
+                    </a>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className={`font-bold ${isUp ? "text-seafoam" : "text-red-400"}`}>
-                      {isUp ? "+" : ""}{row.totalReturn.toFixed(1)}%
-                    </div>
+                  <td className={cn("px-3 py-4 text-right font-bold", isUp ? "text-seafoam" : "text-red-400")}>
+                    {isUp ? "+" : ""}{row.totalReturn.toFixed(1)}%
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-foam/90">{row.consistency.toFixed(0)}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-foam/90">${row.aum.toLocaleString()}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="text-foam/90">{row.allocators}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-3 py-4 text-right text-foam/80">{row.consistency.toFixed(0)}</td>
+                  <td className="px-3 py-4 text-right text-foam/80">${row.aum.toLocaleString()}</td>
+                  <td className="px-3 py-4 text-right text-foam/80">{row.allocators}</td>
+                  <td className="px-3 py-4 text-right">
                     <Badge variant={row.status === "live" ? "success" : "default"}>
                       {row.status === "live" ? "Live" : "Paper"}
                     </Badge>
@@ -96,9 +126,10 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
           </tbody>
         </table>
       </div>
-      <div className="border-t border-white/5 bg-ocean-800/30 px-6 py-3">
-        <span className="text-[10px] text-foam/60 uppercase tracking-wider">
-          Surf-themed ranks: Barrel (1st) • Clean Face (2nd) • Closeout (3rd)
+
+      <div className="border-t border-white/5 bg-ocean-800/30 px-4 py-3">
+        <span className="text-[10px] uppercase tracking-wider text-foam/70">
+          Surf ranks: Barrel (1st) • Clean Face (2nd) • Closeout (3rd)
         </span>
       </div>
     </div>

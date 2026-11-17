@@ -198,6 +198,7 @@ const FUND_COOKIE = "surfdao_funds"
 const ALLOC_COOKIE = "surfdao_allocs"
 const SESSION_COOKIE = "surfdao_sessions"
 const USER_COOKIE = "surfdao_user"
+const AUTH_SESSION_COOKIE = "surfdao_auth"
 
 async function readCookie<T>(name: string): Promise<T[]> {
   try {
@@ -243,6 +244,10 @@ export async function rememberSession(session: FundSession) {
 export async function rememberUser(user: User) {
   const { passwordHash: _passwordHash, ...safe } = user
   await writeCookie(USER_COOKIE, [safe])
+}
+
+export async function rememberAuthSession(session: Session) {
+  await writeCookie(AUTH_SESSION_COOKIE, [session])
 }
 
 export const store = {
@@ -356,7 +361,12 @@ export const store = {
     },
   },
   sessions: {
-    list: () => readFile<Session>(FILES.sessions),
+    list: async () => {
+      const disk = await readFile<Session>(FILES.sessions)
+      const cookieSessions = await readCookie<Session>(AUTH_SESSION_COOKIE)
+      const ids = new Set(disk.map((s) => s.token))
+      return [...cookieSessions.filter((s) => !ids.has(s.token)), ...disk]
+    },
     findByToken: async (token: string) => {
       const rows = await store.sessions.list()
       return rows.find((r) => r.token === token) ?? null
