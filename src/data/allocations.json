@@ -1,0 +1,20 @@
+[
+  {
+    "fundId": "c2268258-7b63-4d88-a66f-bea93938fde0",
+    "allocatorUserId": "869cd349-b7d4-4f37-aa3e-ccc313c2ff4a",
+    "amountUsdc": 250,
+    "keetaTxHash": null,
+    "status": "pending",
+    "id": "36156477-f983-4d1d-b48c-a374bfe76b72",
+    "allocatedAt": "2026-11-17T01:13:52.519Z"
+  },
+  {
+    "fundId": "c2268258-7b63-4d88-a66f-bea93938fde0",
+    "allocatorUserId": "01ef07ec-4541-4233-8399-2fd1e62b171a",
+    "amountUsdc": 125.5,
+    "keetaTxHash": null,
+    "status": "pending",
+    "id": "e705765b-4300-426a-a986-081db2e8b1dc",
+    "allocatedAt": "2026-11-17T01:37:37.961Z"
+  }
+]

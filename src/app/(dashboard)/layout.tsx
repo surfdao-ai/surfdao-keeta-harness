@@ -5,11 +5,11 @@ import { useSession } from "@/components/session-provider"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Flag, Trophy, Droplets, LogOut, Menu } from "lucide-react"
+import { LayoutDashboard, Flag, Trophy, Droplets, LogOut, Menu, UserRound } from "lucide-react"
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/funds", label: "My Funds", icon: Flag },
+  { href: "/dashboard/funds/new", label: "Create Fund", icon: Flag },
   { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/dashboard/allocate", label: "Allocate", icon: Droplets },
 ] as const
@@ -81,15 +81,22 @@ export default function DashboardLayout({
             <LogOut className="h-5 w-5 shrink-0" />
             <span className={collapsed ? "hidden" : "hidden lg:inline"}>Sign out</span>
           </button>
-          <div className="mt-2 flex items-center gap-3 px-3 lg:px-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-seafoam/20 text-xs font-bold text-seafoam">
+          <Link
+            href="/dashboard/profile"
+            title="Your profile"
+            className="mt-2 flex items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-white/5 lg:px-4"
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-seafoam/20 text-xs font-bold text-seafoam ring-1 ring-seafoam/40">
               {(user?.name ?? user?.email ?? "U").charAt(0).toUpperCase()}
             </div>
             <div className={`min-w-0 ${collapsed ? "hidden" : "hidden lg:block"}`}>
-              <div className="truncate text-sm font-medium text-foam">{user?.name ?? user?.email}</div>
-              <div className="truncate text-xs text-foam/70">{user?.keetaAddress ?? "No Keeta wallet"}</div>
+              <div className="flex items-center gap-1 truncate text-sm font-medium text-foam">
+                {user?.name ?? user?.email}
+                <UserRound className="h-3 w-3 text-foam/70" />
+              </div>
+              <div className="truncate text-xs text-foam/70">{user?.keetaAddress ?? "Complete your profile"}</div>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
 

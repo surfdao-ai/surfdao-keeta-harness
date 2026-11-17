@@ -1,15 +1,25 @@
 import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { createSession, destroySession, getSession } from "@/lib/auth"
+import { verifyPassword } from "@/lib/password"
 
 export async function POST(req: Request) {
-  const { email } = await req.json().catch(() => ({}))
-  if (!email) {
-    return NextResponse.json({ error: "email required" }, { status: 400 })
+  const { email, password } = await req.json().catch(() => ({}))
+  if (!email || !password) {
+    return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
   }
-  let user = await (await store.users.list()).find((u) => u.email === email)
+  const user = await store.users.findByEmail(email.toLowerCase().trim())
   if (!user) {
-    user = await store.users.create({ email: email.toLowerCase(), name: email.split("@")[0] })
+    return NextResponse.json({ error: "No account found. Create one first." }, { status: 404 })
+  }
+  if (!user.passwordHash) {
+    return NextResponse.json(
+      { error: "This account needs a password. Sign up again to set one." },
+      { status: 400 },
+    )
+  }
+  if (!verifyPassword(password, user.passwordHash)) {
+    return NextResponse.json({ error: "Incorrect password" }, { status: 401 })
   }
   await createSession(user.id)
   return NextResponse.json({ ok: true, user })
@@ -17,7 +27,8 @@ export async function POST(req: Request) {
 
 export async function GET() {
   const session = await getSession()
-  if (!session) return NextResponse.json({ ok: false, user: null }, { status: 401 })
+  // 200 with ok:false avoids noisy 401s for visitors who aren't signed in.
+  if (!session) return NextResponse.json({ ok: false, user: null })
   return NextResponse.json({ ok: true, user: session.user })
 }
 

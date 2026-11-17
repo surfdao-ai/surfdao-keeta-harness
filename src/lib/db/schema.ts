@@ -89,8 +89,14 @@ export type User = {
   id: string
   email: string
   name?: string
+  passwordHash?: string
   keetaAddress?: string
   imageUrl?: string
+  bio?: string
+  location?: string
+  website?: string
+  twitter?: string
+  favoriteStrategies?: string[]
   createdAt: string
 }
 export type Fund = {
@@ -191,6 +197,7 @@ async function writeFile<T>(key: FileKey, data: T[]) {
 const FUND_COOKIE = "surfdao_funds"
 const ALLOC_COOKIE = "surfdao_allocs"
 const SESSION_COOKIE = "surfdao_sessions"
+const USER_COOKIE = "surfdao_user"
 
 async function readCookie<T>(name: string): Promise<T[]> {
   try {
@@ -233,9 +240,19 @@ export async function rememberSession(session: FundSession) {
   await writeCookie(SESSION_COOKIE, [session, ...rows.filter((s) => s.id !== session.id)])
 }
 
+export async function rememberUser(user: User) {
+  await writeCookie(USER_COOKIE, [user])
+}
+
 export const store = {
   users: {
-    list: () => readFile<User>(FILES.users),
+    list: async () => {
+      const disk = await readFile<User>(FILES.users)
+      const cookieUsers = await readCookie<User>(USER_COOKIE)
+      const map = new Map(disk.map((u) => [u.id, u]))
+      for (const u of cookieUsers) map.set(u.id, { ...map.get(u.id), ...u })
+      return [...map.values()]
+    },
     findByEmail: async (email: string) => {
       const rows = await store.users.list()
       return rows.find((r) => r.email === email) ?? null
@@ -251,13 +268,17 @@ export const store = {
       await writeFile(FILES.users, rows)
       return row
     },
-    updateKeetaAddress: async (id: string, keetaAddress: string) => {
-      const rows = await store.users.list()
+    update: async (id: string, updates: Partial<Omit<User, "id" | "createdAt">>) => {
+      const rows = await readFile<User>(FILES.users)
       const idx = rows.findIndex((r) => r.id === id)
       if (idx === -1) return null
-      rows[idx].keetaAddress = keetaAddress
+      rows[idx] = { ...rows[idx], ...updates }
       await writeFile(FILES.users, rows)
+      // Keep any cookie-mirrored copy in sync for the current browser.
       return rows[idx]
+    },
+    updateKeetaAddress: async (id: string, keetaAddress: string) => {
+      return store.users.update(id, { keetaAddress })
     },
   },
   funds: {

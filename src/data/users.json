@@ -22,5 +22,26 @@
     "name": "cookiefix",
     "id": "f9daf104-e34b-460c-b3ee-e66f8edfbd8e",
     "createdAt": "2026-11-17T00:55:18.930Z"
+  },
+  {
+    "email": "allocbug@surfdao.ai",
+    "name": "allocbug",
+    "id": "869cd349-b7d4-4f37-aa3e-ccc313c2ff4a",
+    "createdAt": "2026-11-17T01:12:48.660Z"
+  },
+  {
+    "email": "features@surfdao.ai",
+    "name": "Feature Tester",
+    "passwordHash": "aae20bd0eff29ad0b420224a5a33e7ac:3a09ad7929939931500fc4605d9d730754cc33164be8b0164b653f168b221314b43e110963edb846717e4b41b6a31caea7312bbd13d075c48e42e59bcae96efb",
+    "id": "01ef07ec-4541-4233-8399-2fd1e62b171a",
+    "createdAt": "2026-11-17T01:34:30.563Z",
+    "bio": "Riding value waves with a contrarian edge.",
+    "location": "Lisbon, Portugal",
+    "website": "",
+    "twitter": "",
+    "keetaAddress": "",
+    "favoriteStrategies": [
+      "intrinsic-value"
+    ]
   }
 ]

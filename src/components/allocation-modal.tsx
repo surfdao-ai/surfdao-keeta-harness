@@ -27,8 +27,20 @@ export default function AllocationModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const val = Number(amount)
-    if (!val || val <= 0) return
+    const clean = amount.trim().replace(/,/g, "")
+    if (!/^\d+(\.\d{1,6})?$/.test(clean)) {
+      toast({
+        title: "Enter a valid amount",
+        description: "Use a positive number with up to 6 decimals, e.g. 250 or 12.5",
+        variant: "destructive",
+      })
+      return
+    }
+    const val = Number(clean)
+    if (!Number.isFinite(val) || val <= 0 || val > 1_000_000) {
+      toast({ title: "Amount out of range", description: "Enter an amount between 0 and 1,000,000 USDC.", variant: "destructive" })
+      return
+    }
     setLoading(true)
     try {
       await onAllocate(val)
@@ -36,7 +48,8 @@ export default function AllocationModal({
       onClose()
       setAmount("")
     } catch (e: any) {
-      toast({ title: "Allocation failed", description: e?.message ?? "Try again later", variant: "destructive" })
+      const message = e?.message && typeof e.message === "string" ? e.message : "Please check the amount and try again."
+      toast({ title: "Allocation failed", description: message, variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -61,7 +74,8 @@ export default function AllocationModal({
               <label className="text-sm font-medium text-foam">Amount (USDC)</label>
               <div className="relative">
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}

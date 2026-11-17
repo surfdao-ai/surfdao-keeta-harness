@@ -34,9 +34,13 @@ funded wallet and audited vault contracts.
 6. **Public leaderboard** — composite ranking from return, consistency, and AUM growth.
 7. **Allocation flow** — any signed-in user can allocate USDC into a public fund; KeeSpecs
    checks run first, and on-chain settlement is gated behind `LIVE_MODE`.
-8. **Zero-config auth & data** — cookie sessions and a JSON file store so the app runs
+8. **Zero-config auth & data** — email + password auth (scrypt hashing) with cookie
+   sessions, a rich editable surfer profile, and a JSON file store so the app runs
    immediately on Vercel preview without external services. Clear swap-in paths to Clerk
    and Neon/Postgres.
+9. **Inference selector** — chooses the LLM provider used for agent reasoning only. Live
+   Keeta mainnet execution is never enabled by this dropdown; it requires `LIVE_MODE=true`,
+   a funded wallet, and an audited vault.
 
 ---
 
@@ -49,8 +53,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-- Sign in (any email — dev auth creates the account).
-- Shape a board at `/dashboard/funds/new`.
+- Create an account with email + password (min 8 characters), or sign in to an existing one.
+- Shape a board at `/dashboard/funds/new` (also reachable from the flag icon in the sidebar).
+- Build a rich surfer profile by clicking your avatar at the bottom of the sidebar.
 - Run an "advance" on the fund detail page.
 - View the public leaderboard at `/dashboard/leaderboard`.
 - Allocate to another fund at `/dashboard/allocate`.

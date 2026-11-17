@@ -5,3 +5,8 @@ export async function POST() {
   await destroySession()
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE() {
+  await destroySession()
+  return NextResponse.json({ ok: true })
+}

@@ -13,14 +13,14 @@ export type SessionUser = {
 type SessionContextType = {
   user: SessionUser | null
   loading: boolean
-  signIn: (user: { email: string; name?: string }) => void
+  signIn: (user: { email: string; password: string; name?: string }, mode: "login" | "signup") => Promise<boolean>
   signOut: () => void
 }
 
 const SessionContext = React.createContext<SessionContextType>({
   user: null,
   loading: true,
-  signIn: () => {},
+  signIn: async () => false,
   signOut: () => {},
 })
 
@@ -48,19 +48,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signIn(user: { email: string; name?: string }) {
+  async function signIn(
+    user: { email: string; password: string; name?: string },
+    mode: "login" | "signup",
+  ): Promise<boolean> {
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch(`/api/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, name: user.name }),
+        body: JSON.stringify(user),
       })
-      if (res.ok) {
-        const json = await res.json()
-        if (json.user) setUser(json.user)
-      }
-    } catch {}
-    router.push("/dashboard")
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error ?? "Sign in failed")
+      if (json.user) setUser(json.user)
+      router.push("/dashboard")
+      return true
+    } catch (e: any) {
+      throw e
+    }
   }
 
   async function signOut() {

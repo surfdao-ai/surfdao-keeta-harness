@@ -271,7 +271,7 @@ export default function NewFundPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foam">Inference endpoint</label>
+              <label className="text-sm font-medium text-foam">Agent inference provider</label>
               <select
                 value={form.inferenceProvider}
                 onChange={(e) => setForm({ ...form, inferenceProvider: e.target.value })}
@@ -281,6 +281,12 @@ export default function NewFundPage() {
                 <option value="openai">OpenAI-compatible</option>
                 <option value="anthropic">Anthropic-compatible</option>
               </select>
+              <div className="rounded-xl border border-wave-blue/25 bg-wave-blue/5 p-3 text-xs leading-relaxed text-foam/80">
+                <strong className="text-wave-blue">Agent reasoning only.</strong> This chooses the LLM that
+                writes agent theses and scores. It does <em>not</em> enable live mainnet trading. Live Keeta
+                execution requires <code className="rounded bg-white/10 px-1">LIVE_MODE=true</code>, a funded
+                wallet, and an audited vault contract.
+              </div>
             </div>
           </div>
         )}
