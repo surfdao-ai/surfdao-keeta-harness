@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import AllocationModal from "@/components/allocation-modal"
 import Disclaimer from "@/components/disclaimer"
+import ModeToggle, { type Mode } from "@/components/mode-toggle"
 import { DollarSign, Users, TrendingUp, Search } from "lucide-react"
 
 type Fund = {
@@ -18,6 +19,7 @@ type Fund = {
   description: string
   ownerId: string
   status: string
+  mode?: string
   aum: number
   allocators: number
   totalReturn: number
@@ -29,6 +31,7 @@ export default function AllocatePage() {
   const [funds, setFunds] = React.useState<Fund[]>([])
   const [loading, setLoading] = React.useState(true)
   const [search, setSearch] = React.useState("")
+  const [mode, setMode] = React.useState<Mode>("paper")
   const [target, setTarget] = React.useState<Fund | null>(null)
 
   React.useEffect(() => {
@@ -61,13 +64,26 @@ export default function AllocatePage() {
     return json
   }
 
-  const filtered = funds.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+  const counts = {
+    paper: funds.filter((f) => (f.mode ?? "paper") === "paper").length,
+    live: funds.filter((f) => (f.mode ?? "paper") === "live").length,
+  }
+  const filtered = funds
+    .filter((f) => (f.mode ?? "paper") === mode)
+    .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foam">Allocate capital</h1>
         <p className="text-foam/80 mt-1">Drop in on funds you believe in. KeeSpecs checks run before every allocation.</p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <ModeToggle mode={mode} onChange={setMode} counts={counts} />
+        <span className="text-xs text-foam/70">
+          {mode === "paper" ? "Simulated allocations — no real USDC moves" : "Live funds — verify the vault before allocating real USDC"}
+        </span>
       </div>
 
       <div className="relative max-w-md">
@@ -82,7 +98,7 @@ export default function AllocatePage() {
           {filtered.map((f) => (
             <div key={f.slug} className="surfboard-card p-5 flex flex-col">
               <div className="flex items-center justify-between mb-3">
-                <Badge variant={f.status === "live" ? "success" : "default"}>{f.status.toUpperCase()}</Badge>
+                <Badge variant={f.mode === "live" ? "destructive" : "default"}>{(f.mode ?? "paper").toUpperCase()}</Badge>
                 <span className={`text-sm font-bold ${f.totalReturn >= 0 ? "text-seafoam" : "text-red-400"}`}>
                   {f.totalReturn >= 0 ? "+" : ""}{f.totalReturn.toFixed(1)}%
                 </span>
@@ -102,7 +118,9 @@ export default function AllocatePage() {
         </div>
       ) : (
         <div className="surfboard-card p-12 text-center">
-          <p className="text-foam/70">No funds found. Be the first to shape a board.</p>
+          <p className="text-foam/70">
+            {mode === "live" ? "No live funds yet. Switch Paper to see simulated boards." : "No funds found. Be the first to shape a board."}
+          </p>
         </div>
       )}
 

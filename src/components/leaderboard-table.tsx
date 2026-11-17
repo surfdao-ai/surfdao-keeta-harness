@@ -19,6 +19,7 @@ export type LeaderboardRow = {
   name: string
   ownerId: string
   status: string
+  mode?: string
   totalReturn: number
   nav: number
   aum: number
@@ -65,8 +66,8 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
                 <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />${row.aum.toLocaleString()}</span>
                 <span className="flex items-center gap-1"><Users className="h-3 w-3" />{row.allocators}</span>
                 <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />{row.consistency.toFixed(0)}</span>
-                <Badge variant={row.status === "live" ? "success" : "default"} className="ml-auto">
-                  {row.status === "live" ? "Live" : "Paper"}
+                <Badge variant={row.mode === "live" ? "destructive" : "default"} className="ml-auto">
+                  {row.mode === "live" ? "Live" : "Paper"}
                 </Badge>
               </div>
             </a>
@@ -116,8 +117,8 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
                   <td className="px-3 py-4 text-right text-foam/80">${row.aum.toLocaleString()}</td>
                   <td className="px-3 py-4 text-right text-foam/80">{row.allocators}</td>
                   <td className="px-3 py-4 text-right">
-                    <Badge variant={row.status === "live" ? "success" : "default"}>
-                      {row.status === "live" ? "Live" : "Paper"}
+                    <Badge variant={row.mode === "live" ? "destructive" : "default"}>
+                      {row.mode === "live" ? "Live" : "Paper"}
                     </Badge>
                   </td>
                 </tr>

@@ -1,5 +1,6 @@
 import { store } from "@/lib/db/schema"
-import LeaderboardTable, { type LeaderboardRow } from "@/components/leaderboard-table"
+import LeaderboardView from "@/components/leaderboard-view"
+import { type LeaderboardRow } from "@/components/leaderboard-table"
 import Disclaimer from "@/components/disclaimer"
 
 export const dynamic = "force-dynamic"
@@ -44,6 +45,7 @@ export default async function LeaderboardPage() {
         name: f.name,
         ownerId: f.ownerId,
         status: f.status,
+        mode: f.executionMode ?? "paper",
         totalReturn,
         nav: latest ? Number(latest.nav) : 10000,
         aum,
@@ -61,7 +63,7 @@ export default async function LeaderboardPage() {
         <h1 className="text-3xl font-bold text-foam">Public leaderboard</h1>
         <p className="text-foam/80 mt-1">The heat rankings. Risk-adjusted performance, consistency, and capital attraction.</p>
       </div>
-      <LeaderboardTable rows={rows} />
+      <LeaderboardView rows={rows} />
       <Disclaimer variant="short" />
     </div>
   )

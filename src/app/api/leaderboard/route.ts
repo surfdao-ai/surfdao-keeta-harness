@@ -53,6 +53,7 @@ export async function GET(req: Request) {
         description: f.description,
         ownerId: f.ownerId,
         status: f.status,
+        mode: f.executionMode ?? "paper",
         totalReturn,
         nav,
         aum,
