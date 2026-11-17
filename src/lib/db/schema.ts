@@ -40,6 +40,8 @@ export const funds = pgTable("funds", {
   keetaWalletAddress: text("keeta_wallet_address"),
   vaultAddress: text("vault_address"),
   executionMode: text("execution_mode", { enum: ["paper", "live"] }).notNull().default("paper"),
+  performanceFeePct: numeric("performance_fee_pct").notNull().default("10"),
+  feeWalletAddress: text("fee_wallet_address"),
   isPublic: boolean("is_public").notNull().default(false),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -77,6 +79,19 @@ export const performanceSnapshots = pgTable("performance_snapshots", {
   sharpe: numeric("sharpe", { precision: 10, scale: 4 }),
   maxDrawdown: numeric("max_drawdown", { precision: 10, scale: 4 }),
   totalReturn: numeric("total_return", { precision: 10, scale: 4 }),
+})
+
+export const performanceFees = pgTable("performance_fees", {
+  id: varchar("id").primaryKey(),
+  fundId: varchar("fund_id").notNull(),
+  ownerId: varchar("owner_id").notNull(),
+  sessionId: varchar("session_id").notNull(),
+  walletAddress: text("wallet_address").notNull(),
+  feeUsdc: numeric("fee_usdc", { precision: 18, scale: 6 }).notNull(),
+  status: text("status", { enum: ["pending", "paid"] }).notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  paidAt: timestamp("paid_at"),
+  txHash: text("tx_hash"),
 })
 
 export const withdrawals = pgTable("withdrawals", {
@@ -131,6 +146,8 @@ export type Fund = {
   keetaWalletAddress: string | null
   vaultAddress?: string | null
   executionMode: "paper" | "live"
+  performanceFeePct?: number
+  feeWalletAddress?: string | null
   isPublic: boolean
   publishedAt?: string | null
   createdAt: string
@@ -161,6 +178,18 @@ export type Session = {
   userId: string
   token: string
   expiresAt: string
+}
+export type PerformanceFee = {
+  id: string
+  fundId: string
+  ownerId: string
+  sessionId: string
+  walletAddress: string
+  feeUsdc: number
+  status: "pending" | "paid"
+  createdAt: string
+  paidAt?: string | null
+  txHash?: string | null
 }
 export type WithdrawalRequest = {
   id: string
@@ -194,6 +223,7 @@ const FILES = {
   allocations: "allocations.json",
   fundSessions: "fundSessions.json",
   withdrawals: "withdrawals.json",
+  fees: "performanceFees.json",
 } as const
 
 type FileKey = (typeof FILES)[keyof typeof FILES]
@@ -450,6 +480,32 @@ export const fileStore = {
       if (idx === -1) return null
       rows[idx] = { ...rows[idx], ...updates }
       await writeFile(FILES.withdrawals, rows)
+      return rows[idx]
+    },
+  },
+  fees: {
+    list: () => readFile<PerformanceFee>(FILES.fees),
+    byOwner: async (ownerId: string) => {
+      const rows = await fileStore.fees.list()
+      return rows.filter((f) => f.ownerId === ownerId).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    },
+    byFund: async (fundId: string) => {
+      const rows = await fileStore.fees.list()
+      return rows.filter((f) => f.fundId === fundId).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    },
+    create: async (fee: Omit<PerformanceFee, "id" | "createdAt">) => {
+      const rows = await fileStore.fees.list()
+      const row: PerformanceFee = { ...fee, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
+      rows.push(row)
+      await writeFile(FILES.fees, rows)
+      return row
+    },
+    update: async (id: string, updates: Partial<PerformanceFee>) => {
+      const rows = await fileStore.fees.list()
+      const idx = rows.findIndex((f) => f.id === id)
+      if (idx === -1) return null
+      rows[idx] = { ...rows[idx], ...updates }
+      await writeFile(FILES.fees, rows)
       return rows[idx]
     },
   },

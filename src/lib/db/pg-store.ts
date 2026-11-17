@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS funds (
   description text, slug text UNIQUE NOT NULL, status text NOT NULL DEFAULT 'paper',
   mandate jsonb NOT NULL, risk_config jsonb NOT NULL, inference_config jsonb NOT NULL,
   assets jsonb NOT NULL, keeta_wallet_address text, vault_address text,
-  execution_mode text NOT NULL DEFAULT 'paper', is_public boolean NOT NULL DEFAULT false,
+  execution_mode text NOT NULL DEFAULT 'paper',
+  performance_fee_pct numeric NOT NULL DEFAULT 10, fee_wallet_address text,
+  is_public boolean NOT NULL DEFAULT false,
   published_at text, created_at text NOT NULL
 );
 CREATE TABLE IF NOT EXISTS fund_sessions (
@@ -41,6 +43,12 @@ CREATE TABLE IF NOT EXISTS allocations (
   id text PRIMARY KEY, fund_id text NOT NULL, allocator_user_id text NOT NULL,
   allocator_name text, amount_usdc numeric NOT NULL, keeta_tx_hash text,
   status text NOT NULL DEFAULT 'active', allocated_at text NOT NULL
+);
+CREATE TABLE IF NOT EXISTS performance_fees (
+  id text PRIMARY KEY, fund_id text NOT NULL, owner_id text NOT NULL,
+  session_id text NOT NULL, wallet_address text NOT NULL, fee_usdc numeric NOT NULL,
+  status text NOT NULL DEFAULT 'pending', created_at text NOT NULL,
+  paid_at text, tx_hash text
 );
 CREATE TABLE IF NOT EXISTS withdrawals (
   id text PRIMARY KEY, fund_id text NOT NULL, user_id text NOT NULL, user_name text,
@@ -62,6 +70,17 @@ export async function ensureSchema(): Promise<void> {
     _ready = (async () => {
       for (const statement of DDL.split(";").map((s) => s.trim()).filter(Boolean)) {
         await sql().query(statement)
+      }
+      // Additive migrations for databases created before newer fields existed.
+      const migrations = [
+        "ALTER TABLE funds ADD COLUMN IF NOT EXISTS performance_fee_pct numeric NOT NULL DEFAULT 10",
+        "ALTER TABLE funds ADD COLUMN IF NOT EXISTS fee_wallet_address text",
+        "ALTER TABLE funds ADD COLUMN IF NOT EXISTS vault_address text",
+        "ALTER TABLE funds ADD COLUMN IF NOT EXISTS execution_mode text NOT NULL DEFAULT 'paper'",
+        "ALTER TABLE allocations ADD COLUMN IF NOT EXISTS allocator_name text",
+      ]
+      for (const m of migrations) {
+        try { await sql().query(m) } catch { /* column already compatible */ }
       }
     })().catch((e) => { _ready = null; throw e })
   }
@@ -87,7 +106,8 @@ export const pgStore = {
       const row = { ...u, id: u.id ?? crypto.randomUUID(), created_at: new Date().toISOString() }
       await sql()`INSERT INTO users (id,email,name,password_hash,keeta_address,image_url,bio,location,website,twitter,favorite_strategies,created_at)
         VALUES (${row.id},${row.email},${row.name ?? null},${row.passwordHash ?? null},${row.keetaAddress ?? null},${row.imageUrl ?? null},${row.bio ?? null},${row.location ?? null},${row.website ?? null},${row.twitter ?? null},${JSON.stringify(row.favoriteStrategies ?? [])},${row.created_at})`
-      return userRow(row)
+      const rows = await sql()`SELECT * FROM users WHERE id = ${row.id} LIMIT 1`
+      return userRow(rows[0])
     },
     update: async (id: string, updates: any) => {
       await ensureSchema()
@@ -125,15 +145,17 @@ export const pgStore = {
     create: async (f: any) => {
       await ensureSchema()
       const row = { ...f, id: f.id ?? crypto.randomUUID(), created_at: new Date().toISOString() }
-      await sql()`INSERT INTO funds (id,owner_id,name,description,slug,status,mandate,risk_config,inference_config,assets,keeta_wallet_address,vault_address,execution_mode,is_public,published_at,created_at)
-        VALUES (${row.id},${row.ownerId},${row.name},${row.description},${row.slug},${row.status},${JSON.stringify(row.mandate)},${JSON.stringify(row.riskConfig)},${JSON.stringify(row.inferenceConfig)},${JSON.stringify(row.assets)},${row.keetaWalletAddress ?? null},${row.vaultAddress ?? null},${row.executionMode ?? "paper"},${row.isPublic ?? false},${row.publishedAt ?? null},${row.created_at})`
-      return fundRow(row)
+      await sql()`INSERT INTO funds (id,owner_id,name,description,slug,status,mandate,risk_config,inference_config,assets,keeta_wallet_address,vault_address,execution_mode,performance_fee_pct,fee_wallet_address,is_public,published_at,created_at)
+        VALUES (${row.id},${row.ownerId},${row.name},${row.description},${row.slug},${row.status},${JSON.stringify(row.mandate)},${JSON.stringify(row.riskConfig)},${JSON.stringify(row.inferenceConfig)},${JSON.stringify(row.assets)},${row.keetaWalletAddress ?? null},${row.vaultAddress ?? null},${row.executionMode ?? "paper"},${row.performanceFeePct ?? 10},${row.feeWalletAddress ?? null},${row.isPublic ?? false},${row.publishedAt ?? null},${row.created_at})`
+      const rows = await sql()`SELECT * FROM funds WHERE id = ${row.id} LIMIT 1`
+      return fundRow(rows[0])
     },
     update: async (id: string, updates: any) => {
       await ensureSchema()
       const map: Record<string, string> = {
         isPublic: "is_public", publishedAt: "published_at", vaultAddress: "vault_address",
         executionMode: "execution_mode", keetaWalletAddress: "keeta_wallet_address",
+        performanceFeePct: "performance_fee_pct", feeWalletAddress: "fee_wallet_address",
         status: "status", name: "name", description: "description", assets: "assets",
         mandate: "mandate", riskConfig: "risk_config", inferenceConfig: "inference_config",
       }
@@ -162,7 +184,8 @@ export const pgStore = {
       const row = { ...a, id: crypto.randomUUID(), allocated_at: new Date().toISOString() }
       await sql()`INSERT INTO allocations (id,fund_id,allocator_user_id,allocator_name,amount_usdc,keeta_tx_hash,status,allocated_at)
         VALUES (${row.id},${row.fundId},${row.allocatorUserId},${row.allocatorName ?? null},${row.amountUsdc},${row.keetaTxHash ?? null},${row.status},${row.allocated_at})`
-      return allocRow(row)
+      const rows = await sql()`SELECT * FROM allocations WHERE id = ${row.id} LIMIT 1`
+      return allocRow(rows[0])
     },
     update: async (id: string, updates: any) => {
       await ensureSchema()
@@ -185,7 +208,8 @@ export const pgStore = {
       const row = { ...s, id: crypto.randomUUID(), timestamp: new Date().toISOString() }
       await sql()`INSERT INTO fund_sessions (id,fund_id,timestamp,decisions,checks,actions,nav,return_pct,status)
         VALUES (${row.id},${row.fundId},${row.timestamp},${JSON.stringify(row.decisions)},${JSON.stringify(row.checks)},${JSON.stringify(row.actions)},${row.nav},${row.returnPct},${row.status})`
-      return sessionRow(row)
+      const rows = await sql()`SELECT * FROM fund_sessions WHERE id = ${row.id} LIMIT 1`
+      return sessionRow(rows[0])
     },
   },
   withdrawals: {
@@ -206,7 +230,8 @@ export const pgStore = {
       const row = { ...w, id: crypto.randomUUID(), requested_at: new Date().toISOString() }
       await sql()`INSERT INTO withdrawals (id,fund_id,user_id,user_name,keeta_address,amount_usdc,status,requested_at,processed_at,tx_hash,note)
         VALUES (${row.id},${row.fundId},${row.userId},${row.userName},${row.keetaAddress},${row.amountUsdc},${row.status},${row.requested_at},${row.processedAt ?? null},${row.txHash ?? null},${row.note ?? null})`
-      return withdrawalRow(row)
+      const rows = await sql()`SELECT * FROM withdrawals WHERE id = ${row.id} LIMIT 1`
+      return withdrawalRow(rows[0])
     },
     update: async (id: string, updates: any) => {
       await ensureSchema()
@@ -218,6 +243,37 @@ export const pgStore = {
       }
       const rows = await sql()`SELECT * FROM withdrawals WHERE id = ${id} LIMIT 1`
       return rows[0] ? withdrawalRow(rows[0]) : null
+    },
+  },
+  fees: {
+    list: async () => {
+      await ensureSchema()
+      return (await sql()`SELECT * FROM performance_fees ORDER BY created_at DESC`).map(feeRow)
+    },
+    byOwner: async (ownerId: string) => {
+      await ensureSchema()
+      return (await sql()`SELECT * FROM performance_fees WHERE owner_id = ${ownerId} ORDER BY created_at DESC`).map(feeRow)
+    },
+    byFund: async (fundId: string) => {
+      await ensureSchema()
+      return (await sql()`SELECT * FROM performance_fees WHERE fund_id = ${fundId} ORDER BY created_at DESC`).map(feeRow)
+    },
+    create: async (f: any) => {
+      await ensureSchema()
+      const row = { ...f, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+      await sql()`INSERT INTO performance_fees (id,fund_id,owner_id,session_id,wallet_address,fee_usdc,status,created_at,paid_at,tx_hash)
+        VALUES (${row.id},${row.fundId},${row.ownerId},${row.sessionId},${row.walletAddress},${row.feeUsdc},${row.status},${row.created_at},${row.paidAt ?? null},${row.txHash ?? null})`
+      const rows = await sql()`SELECT * FROM performance_fees WHERE id = ${row.id} LIMIT 1`
+      return feeRow(rows[0])
+    },
+    update: async (id: string, updates: any) => {
+      await ensureSchema()
+      const map: Record<string, string> = { status: "status", paidAt: "paid_at", txHash: "tx_hash" }
+      for (const [k, col] of Object.entries(map)) {
+        if (k in updates) await sql().query(`UPDATE performance_fees SET ${col} = $1 WHERE id = $2`, [updates[k], id])
+      }
+      const rows = await sql()`SELECT * FROM performance_fees WHERE id = ${id} LIMIT 1`
+      return rows[0] ? feeRow(rows[0]) : null
     },
   },
   sessions: {
@@ -234,7 +290,8 @@ export const pgStore = {
       await ensureSchema()
       const row = { ...s, id: crypto.randomUUID() }
       await sql()`INSERT INTO auth_sessions (id,user_id,token,expires_at) VALUES (${row.id},${row.userId},${row.token},${row.expiresAt})`
-      return authSessionRow(row)
+      const rows = await sql()`SELECT * FROM auth_sessions WHERE id = ${row.id} LIMIT 1`
+      return authSessionRow(rows[0])
     },
     delete: async (token: string) => {
       await ensureSchema()
@@ -260,8 +317,10 @@ function fundRow(r: any) {
     status: r.status, mandate: parse(r.mandate), riskConfig: parse(r.risk_config),
     inferenceConfig: parse(r.inference_config), assets: parse(r.assets) ?? [],
     keetaWalletAddress: r.keeta_wallet_address, vaultAddress: r.vault_address,
-    executionMode: r.execution_mode ?? "paper", isPublic: r.is_public,
-    publishedAt: r.published_at, createdAt: r.created_at,
+    executionMode: r.execution_mode ?? "paper",
+    performanceFeePct: r.performance_fee_pct == null ? 10 : Number(r.performance_fee_pct),
+    feeWalletAddress: r.fee_wallet_address,
+    isPublic: r.is_public, publishedAt: r.published_at, createdAt: r.created_at,
   }
 }
 function allocRow(r: any) {
@@ -284,6 +343,13 @@ function withdrawalRow(r: any) {
     id: r.id, fundId: r.fund_id, userId: r.user_id, userName: r.user_name,
     keetaAddress: r.keeta_address, amountUsdc: num(r.amount_usdc), status: r.status,
     requestedAt: r.requested_at, processedAt: r.processed_at, txHash: r.tx_hash, note: r.note,
+  }
+}
+function feeRow(r: any) {
+  return {
+    id: r.id, fundId: r.fund_id, ownerId: r.owner_id, sessionId: r.session_id,
+    walletAddress: r.wallet_address, feeUsdc: num(r.fee_usdc), status: r.status,
+    createdAt: r.created_at, paidAt: r.paid_at, txHash: r.tx_hash,
   }
 }
 function authSessionRow(r: any) {

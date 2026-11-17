@@ -31,6 +31,8 @@ export default function NewFundPage() {
     assets: [] as { symbol: string; name: string; address: string | null; color: string; weight: number }[],
     maxPositionPct: DEFAULT_RISK_CONFIG.maxPositionPct,
     maxDrawdownPct: DEFAULT_RISK_CONFIG.maxDrawdownPct,
+    performanceFeePct: 10,
+    feeWalletAddress: "",
     provider: "simulated",
     model: "surfdao-paper",
     endpoint: "",
@@ -135,6 +137,8 @@ export default function NewFundPage() {
           mandate: { agents: form.agents },
           riskConfig: { ...DEFAULT_RISK_CONFIG, maxPositionPct: form.maxPositionPct, maxDrawdownPct: form.maxDrawdownPct },
           assets: form.assets,
+          performanceFeePct: form.performanceFeePct,
+          feeWalletAddress: form.feeWalletAddress || form.keetaWalletAddress || undefined,
           inferenceConfig: {
             provider: form.provider,
             model: form.model,
@@ -239,6 +243,16 @@ export default function NewFundPage() {
               <input type="range" min="5" max="50" value={form.maxPositionPct} onChange={(e) => setForm({ ...form, maxPositionPct: Number(e.target.value) })} className="w-full accent-seafoam" />
               <label className="block text-sm font-medium text-foam">Max drawdown <span className="text-seafoam">{form.maxDrawdownPct}%</span></label>
               <input type="range" min="5" max="40" value={form.maxDrawdownPct} onChange={(e) => setForm({ ...form, maxDrawdownPct: Number(e.target.value) })} className="w-full accent-seafoam" />
+            </div>
+            <div className="space-y-3 rounded-xl border border-seafoam/25 bg-seafoam/5 p-4">
+              <div className="text-sm font-semibold text-seafoam">Creator performance fee</div>
+              <p className="text-xs text-foam/80">Keeper custody holds the principal; you only receive a fee on gains, paid to your own wallet.</p>
+              <label className="block text-sm font-medium text-foam">Fee on gains <span className="text-seafoam">{form.performanceFeePct}%</span></label>
+              <input type="range" min="0" max="30" value={form.performanceFeePct} onChange={(e) => setForm({ ...form, performanceFeePct: Number(e.target.value) })} className="w-full accent-seafoam" />
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foam/80">Your Keeta wallet for fees</label>
+                <Input placeholder="keeta_… (defaults to fund wallet)" value={form.feeWalletAddress} onChange={(e) => setForm({ ...form, feeWalletAddress: e.target.value })} />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foam">Inference provider</label>

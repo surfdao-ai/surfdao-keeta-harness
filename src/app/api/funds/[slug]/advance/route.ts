@@ -89,6 +89,28 @@ export async function POST(
   })
   await rememberSession(createdSession)
 
+  // Model A/D: keeper holds principal; the creator only earns a performance fee
+  // on gains, paid to their own wallet (tracked now, paid by the keeper in live mode).
+  let performanceFee = null
+  const feePct = Number((fund as any).performanceFeePct ?? 10)
+  const gain = prevNav * returnPct
+  if (feePct > 0 && gain > 0) {
+    const feeUsdc = Math.round(gain * (feePct / 100) * 100) / 100
+    const wallet = (fund as any).feeWalletAddress || (fund as any).keetaWalletAddress || null
+    if (wallet) {
+      performanceFee = await store.fees.create({
+        fundId: fund.id,
+        ownerId: fund.ownerId,
+        sessionId: createdSession.id,
+        walletAddress: wallet,
+        feeUsdc,
+        status: "pending",
+        paidAt: null,
+        txHash: null,
+      })
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     mode: result.mode,
@@ -103,6 +125,7 @@ export async function POST(
     prices,
     aum,
     newCapital,
+    performanceFee,
     sessionIndex: priorSessions.length,
   })
 }

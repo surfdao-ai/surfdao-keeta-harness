@@ -146,6 +146,8 @@ export default async function FundDetailPage({
                 <div className="flex justify-between text-sm"><span className="text-foam/80">Agents</span><span className="text-foam">{((fund.mandate as any)?.agents ?? []).length}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-foam/80">Provider</span><span className="text-foam">{(fund.inferenceConfig as any)?.provider ?? "simulated"}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-foam/80">Custom endpoint</span><span className="text-foam">{(fund.inferenceConfig as any)?.endpoint ? "Yes" : "No"}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Creator fee on gains</span><span className="text-seafoam">{(fund as any).performanceFeePct ?? 10}%</span></div>
+                <div className="flex justify-between text-sm"><span className="text-foam/80">Fee wallet</span><span className="truncate pl-2 text-foam">{(fund as any).feeWalletAddress ?? (fund as any).keetaWalletAddress ?? "Not set"}</span></div>
                 <div className="flex justify-between text-sm"><span className="text-foam/80">Visibility</span><span className="text-foam">{fund.isPublic ? "Public" : "Draft"}</span></div>
               </div>
             </div>

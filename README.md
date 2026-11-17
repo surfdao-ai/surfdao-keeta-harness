@@ -209,8 +209,12 @@ not code-enforced vault logic. The implemented model (`lib/keeta/vault.ts`):
 - **Vault creation** — the platform keeper (server signer from `KEETA_KEEPER_SEED`) creates a
   `STORAGE` account per fund. Default permission is `STORAGE_DEPOSIT` (anyone can deposit);
   `STORAGE_CAN_HOLD` is granted **only for the Keeta USDC token** (single-token vault).
-- **Rug-pull protection** — the **keeper owns the storage account**, not the fund creator.
-  The creator is never given OWNER or SEND_ON_BEHALF, so they cannot withdraw allocator funds.
+- **Custody model A/D (chosen)** — the **keeper owns the storage account and holds all
+  principal**; the fund creator is never given OWNER or SEND_ON_BEHALF and cannot withdraw
+  allocator funds. Instead, the creator earns a configurable **performance fee on gains only**
+  (default 10%, max 30%), accrued each profitable session and paid by the keeper to the
+  creator's **own Keeta wallet** after a 7-day timelock. Paper mode tracks fees as `pending`;
+  the keeper pays them once live execution is configured.
   Per Keeta docs, a storage owner can still change ACLs later, so this is a policy/custodial
   guarantee, not an immutable on-chain one — disclosed to users in the UI.
 - **Allocation verification** — allocators send USDC to the displayed vault address. The keeper

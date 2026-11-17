@@ -17,7 +17,8 @@ type FundRow = { id: string; name: string; slug: string; status: string; created
 type AllocationRow = { id: string; fundName: string; fundSlug: string; amountUsdc: number; status: string; allocatedAt: string }
 type ActivityRow = { id: string; fundName: string; fundSlug: string; nav: number; returnPct: number; timestamp: string }
 type WithdrawalRow = { id: string; fundName: string; amountUsdc: number; status: string; requestedAt: string; txHash?: string | null }
-type ActivityData = { funds: FundRow[]; allocations: AllocationRow[]; activity: ActivityRow[]; withdrawals: WithdrawalRow[] }
+type FeeRow = { id: string; fundName: string; feeUsdc: number; status: string; createdAt: string; walletAddress: string }
+type ActivityData = { funds: FundRow[]; allocations: AllocationRow[]; activity: ActivityRow[]; withdrawals: WithdrawalRow[]; fees: FeeRow[] }
 
 type Tab = "overview" | "funds" | "allocations" | "activity"
 
@@ -27,7 +28,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [tab, setTab] = React.useState<Tab>("overview")
-  const [data, setData] = React.useState<ActivityData>({ funds: [], allocations: [], activity: [], withdrawals: [] })
+  const [data, setData] = React.useState<ActivityData>({ funds: [], allocations: [], activity: [], withdrawals: [], fees: [] })
   const [dataLoading, setDataLoading] = React.useState(true)
   const [form, setForm] = React.useState({
     name: "", bio: "", keetaAddress: "", location: "", website: "", twitter: "",
@@ -257,6 +258,17 @@ export default function ProfilePage() {
                         </div>
                       </Link>
                     )) : <p className="text-sm text-foam/70">No sessions yet. Run an advance on one of your boards.</p>}
+                  </div>
+                )}
+                {tab === "overview" && data.fees.length > 0 && (
+                  <div className="mt-6 space-y-3 border-t border-white/10 pt-5">
+                    <h3 className="text-sm font-bold text-seafoam">Performance fees earned</h3>
+                    {data.fees.map((f) => (
+                      <div key={f.id} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm">
+                        <div><div className="text-foam">{f.fundName}</div><div className="text-xs text-foam/70">{new Date(f.createdAt).toLocaleString()} · <span className="capitalize">{f.status}</span> · {f.walletAddress.slice(0, 12)}…</div></div>
+                        <div className="font-semibold text-seafoam">${f.feeUsdc.toFixed(2)}</div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {tab === "overview" && data.withdrawals.length > 0 && (

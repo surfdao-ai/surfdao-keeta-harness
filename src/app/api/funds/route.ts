@@ -57,6 +57,11 @@ export async function POST(req: Request) {
   const inference = await safeInference(body.inferenceConfig)
   if (!inference.ok) return NextResponse.json({ error: inference.error }, { status: 400 })
   const publish = body.publish !== false
+  const feePctRaw = Number(body.performanceFeePct)
+  const performanceFeePct = Number.isFinite(feePctRaw)
+    ? Math.max(0, Math.min(30, Math.round(feePctRaw)))
+    : 10
+  const feeWallet = safeText(body.feeWalletAddress, 128) ?? keetaWalletAddress
 
   const fund = await store.funds.create({
     ownerId: session.user.id,
@@ -71,6 +76,8 @@ export async function POST(req: Request) {
     keetaWalletAddress,
     vaultAddress: null,
     executionMode: "paper",
+    performanceFeePct,
+    feeWalletAddress: feeWallet,
     isPublic: publish,
     publishedAt: publish ? new Date().toISOString() : null,
   })

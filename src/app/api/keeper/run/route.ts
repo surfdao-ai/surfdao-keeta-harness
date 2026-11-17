@@ -22,13 +22,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Keeper signer not configured" }, { status: 400 })
   }
 
-  const [funds, users, allocations, withdrawals] = await Promise.all([
+  const [funds, users, allocations, withdrawals, fees] = await Promise.all([
     store.funds.list(),
     store.users.list(),
     store.allocations.list(),
     store.withdrawals.list(),
+    store.fees.list(),
   ])
-  const result = { depositsCredited: 0, withdrawalsPaid: 0, errors: [] as string[] }
+  const result = { depositsCredited: 0, withdrawalsPaid: 0, feesPaid: 0, errors: [] as string[] }
 
   for (const fund of funds) {
     const vault = (fund as any).vaultAddress
@@ -84,6 +85,23 @@ export async function POST(req: Request) {
         result.withdrawalsPaid++
       } catch (e: any) {
         result.errors.push(`withdraw ${w.id}: ${e?.message ?? e}`)
+      }
+    }
+
+    // 3) Pay accrued performance fees to creator wallets after a 7-day timelock.
+    for (const fee of fees.filter((f) => f.fundId === fund.id && f.status === "pending")) {
+      if (Date.now() - new Date(fee.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000) continue
+      try {
+        const paid = await payWithdrawal(vault, fee.walletAddress, fee.feeUsdc)
+        if (!paid.ok) { result.errors.push(`fee ${fee.id}: ${paid.error}`); continue }
+        await store.fees.update(fee.id, {
+          status: "paid",
+          paidAt: new Date().toISOString(),
+          txHash: paid.txHash,
+        })
+        result.feesPaid++
+      } catch (e: any) {
+        result.errors.push(`fee ${fee.id}: ${e?.message ?? e}`)
       }
     }
   }
