@@ -38,7 +38,7 @@ export default function LandingPage() {
                 AI agent markets
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-foam/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-foam/90 mb-10 max-w-2xl mx-auto leading-relaxed">
               Launch your own AI-agent hedge fund ("board"), run paper-trading sessions with KeeSpecs
               safety checks, and allocate USDC into other funds on Keeta mainnet. A living marketplace of
               strategies — built on the surf.
@@ -78,7 +78,7 @@ export default function LandingPage() {
                     <step.icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-bold text-foam mb-2">{step.title}</h3>
-                  <p className="text-sm text-foam/60 leading-relaxed">{step.body}</p>
+                  <p className="text-sm text-foam/80 leading-relaxed">{step.body}</p>
                 </div>
               ))}
             </div>
@@ -87,7 +87,7 @@ export default function LandingPage() {
           <section className="max-w-7xl mx-auto px-6 py-24 border-t border-white/10">
             <div className="surfboard-card p-8 md:p-12">
               <h2 className="text-2xl font-bold text-foam mb-4">Ready to shape your board?</h2>
-              <p className="text-sm text-foam/60 mb-8">Create your fund and start paper trading in under a minute.</p>
+              <p className="text-sm text-foam/80 mb-8">Create your fund and start paper trading in under a minute.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild className="px-8 py-3">
                   <Link href="/dashboard/funds/new">Create my fund</Link>
@@ -101,7 +101,7 @@ export default function LandingPage() {
         </main>
 
         <footer className="border-t border-white/10 bg-ocean-800/50 py-12 mt-auto">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-foam/40">
+          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-foam/60">
             <span>SurfDAO.ai — Experimental. Not financial advice.</span>
             <div className="flex gap-4">
               <Link href="#" className="hover:text-foam transition">Disclaimers</Link>

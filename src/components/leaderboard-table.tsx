@@ -9,7 +9,7 @@ const RANK_STYLES: RankStyle[] = [
   { label: "Barrel", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" }, // 1st
   { label: "Clean Face", color: "text-slate-300", bg: "bg-slate-500/10", border: "border-slate-500/30" }, // 2nd
   { label: "Closeout", color: "text-seafoam/80", bg: "bg-seafoam/10", border: "border-seafoam/30" }, // 3rd
-  { label: "Inside", color: "text-foam/60", bg: "bg-white/5", border: "border-white/10" }, // rest
+  { label: "Inside", color: "text-foam/80", bg: "bg-white/5", border: "border-white/10" }, // rest
 ]
 
 export type LeaderboardRow = {
@@ -31,7 +31,7 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
     <div className="surfboard-card p-0">
       <div className="border-b border-white/5 bg-ocean-800/40 px-6 py-4">
         <h2 className="text-lg font-bold text-foam">Leaderboard</h2>
-        <p className="text-xs text-foam/50 mt-1">
+        <p className="text-xs text-foam/70 mt-1">
           Ranked by composite score: return, consistency, and AUM growth.{" "}
           <span className="text-seafoam">Paper trading results.</span>
         </p>
@@ -40,13 +40,13 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/5">
-              <th className="text-left px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Rank</th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Fund</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Return</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Consistency</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">AUM</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Allocators</th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-foam/50 uppercase tracking-wider">Status</th>
+              <th className="text-left px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Rank</th>
+              <th className="text-left px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Fund</th>
+              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Return</th>
+              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Consistency</th>
+              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">AUM</th>
+              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Allocators</th>
+              <th className="text-right px-6 py-3 text-xs font-medium text-foam/70 uppercase tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -62,14 +62,14 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
                     {row.rank <= 3 ? (
                       <Medal className="h-5 w-5 shrink-0" style={{ color: style.color }} />
                     ) : (
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full {style.bg} {style.border} text-xs font-bold {style.color}">
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${style.bg} ${style.border} ${style.color}`}>
                         {row.rank}
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-foam">{row.name}</div>
-                    <div className="text-xs text-foam/50">{row.ownerId.slice(0, 6)}…{row.ownerId.slice(-4)}</div>
+                    <div className="text-xs text-foam/70">{row.ownerId.slice(0, 6)}…{row.ownerId.slice(-4)}</div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className={`font-bold ${isUp ? "text-seafoam" : "text-red-400"}`}>
@@ -77,13 +77,13 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-foam/70">{row.consistency.toFixed(0)}</span>
+                    <span className="text-foam/90">{row.consistency.toFixed(0)}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-foam/70">${row.aum.toLocaleString()}</span>
+                    <span className="text-foam/90">${row.aum.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-foam/70">{row.allocators}</span>
+                    <span className="text-foam/90">{row.allocators}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Badge variant={row.status === "live" ? "success" : "default"}>
@@ -97,7 +97,7 @@ export default function LeaderboardTable({ rows }: { rows: LeaderboardRow[] }) {
         </table>
       </div>
       <div className="border-t border-white/5 bg-ocean-800/30 px-6 py-3">
-        <span className="text-[10px] text-foam/40 uppercase tracking-wider">
+        <span className="text-[10px] text-foam/60 uppercase tracking-wider">
           Surf-themed ranks: Barrel (1st) • Clean Face (2nd) • Closeout (3rd)
         </span>
       </div>

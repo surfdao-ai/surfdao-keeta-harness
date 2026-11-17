@@ -67,16 +67,16 @@ export default function AllocatePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foam">Allocate capital</h1>
-        <p className="text-foam/60 mt-1">Drop in on funds you believe in. KeeSpecs checks run before every allocation.</p>
+        <p className="text-foam/80 mt-1">Drop in on funds you believe in. KeeSpecs checks run before every allocation.</p>
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-foam/40" />
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-foam/60" />
         <Input placeholder="Search funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       {loading ? (
-        <p className="text-foam/50">Loading funds…</p>
+        <p className="text-foam/70">Loading funds…</p>
       ) : filtered.length ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((f) => (
@@ -90,8 +90,8 @@ export default function AllocatePage() {
               <Link href={`/dashboard/funds/${f.slug}`} className="text-lg font-bold text-foam hover:text-wave-blue transition">
                 {f.name}
               </Link>
-              <p className="text-sm text-foam/50 mt-1 line-clamp-2 flex-1">{f.description || "No description."}</p>
-              <div className="flex items-center gap-4 mt-4 text-xs text-foam/50">
+              <p className="text-sm text-foam/70 mt-1 line-clamp-2 flex-1">{f.description || "No description."}</p>
+              <div className="flex items-center gap-4 mt-4 text-xs text-foam/70">
                 <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />${f.aum.toLocaleString()}</span>
                 <span className="flex items-center gap-1"><Users className="h-3 w-3" />{f.allocators}</span>
                 <span className="flex items-center gap-1"><TrendingUp className="h-3 w-3" />#{f.allocators || "—"}</span>
@@ -102,7 +102,7 @@ export default function AllocatePage() {
         </div>
       ) : (
         <div className="surfboard-card p-12 text-center">
-          <p className="text-foam/50">No funds found. Be the first to shape a board.</p>
+          <p className="text-foam/70">No funds found. Be the first to shape a board.</p>
         </div>
       )}
 

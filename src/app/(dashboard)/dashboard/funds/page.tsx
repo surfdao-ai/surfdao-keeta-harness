@@ -30,7 +30,7 @@ export default async function MyFundsPage() {
         <div className="surfboard-card p-12 text-center">
           <Plus className="h-10 w-10 mx-auto text-foam/20 mb-4" />
           <h3 className="text-lg font-bold text-foam mb-2">No funds yet</h3>
-          <p className="text-sm text-foam/50 mb-6">Shape your first board to start paper trading.</p>
+          <p className="text-sm text-foam/70 mb-6">Shape your first board to start paper trading.</p>
           <Button asChild>
             <a href="/dashboard/funds/new">Create a fund</a>
           </Button>

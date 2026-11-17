@@ -42,7 +42,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-foam mb-2 text-center">
             {mode === "login" ? "Welcome back" : "Shape your board"}
           </h1>
-          <p className="text-sm text-foam/50 mb-6 text-center">
+          <p className="text-sm text-foam/70 mb-6 text-center">
             {mode === "login" ? "Sign in to your account." : "Create an account to start paper trading."}
           </p>
           <form onSubmit={submit} className="space-y-4">
@@ -60,7 +60,7 @@ export default function LoginPage() {
               {loading ? "Signing in…" : mode === "login" ? "Sign in" : "Create account"}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-foam/50">
+          <div className="mt-6 text-center text-sm text-foam/70">
             {mode === "login" ? "New to SurfDAO?" : "Already have an account?"}{" "}
             <button
               onClick={() => setMode(mode === "login" ? "signup" : "login")}
@@ -69,7 +69,7 @@ export default function LoginPage() {
               {mode === "login" ? "Create an account" : "Sign in"}
             </button>
           </div>
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-foam/40">
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-foam/60">
             <Waves className="h-3 w-3" /> No passwords — dev session auth for the MVP.
           </div>
         </div>

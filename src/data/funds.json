@@ -1,0 +1,143 @@
+[
+  {
+    "ownerId": "63060e20-529f-4b4e-afad-68fb78ee1c83",
+    "name": "Test Fund 123",
+    "description": "",
+    "slug": "test-fund-123",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper"
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "c2268258-7b63-4d88-a66f-bea93938fde0",
+    "createdAt": "2026-11-17T00:26:16.545Z"
+  },
+  {
+    "ownerId": "63060e20-529f-4b4e-afad-68fb78ee1c83",
+    "name": "My Fund!!! 🚀",
+    "description": "",
+    "slug": "my-fund",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper"
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "988843ed-085e-4296-92be-508e8eb2140b",
+    "createdAt": "2026-11-17T00:26:55.948Z"
+  },
+  {
+    "ownerId": "05b74971-a101-49d6-94ab-4e49560e6db7",
+    "name": "Polished Board",
+    "description": "",
+    "slug": "polished-board",
+    "status": "paper",
+    "mandate": {
+      "agents": [
+        {
+          "id": "deep-value",
+          "weight": 20
+        },
+        {
+          "id": "intrinsic-value",
+          "weight": 20
+        },
+        {
+          "id": "quality-moat",
+          "weight": 20
+        },
+        {
+          "id": "risk-manager",
+          "weight": 20
+        },
+        {
+          "id": "portfolio-manager",
+          "weight": 20
+        }
+      ]
+    },
+    "riskConfig": {
+      "maxPositionPct": 25,
+      "maxDrawdownPct": 15,
+      "maxConcentrationPct": 40,
+      "stopLossPct": 10,
+      "allowShort": false,
+      "allowLeverage": false
+    },
+    "inferenceConfig": {
+      "provider": "simulated",
+      "model": "surfdao-paper"
+    },
+    "keetaWalletAddress": null,
+    "isPublic": true,
+    "id": "c2de2efd-9bdb-4585-a686-ae40777ee589",
+    "createdAt": "2026-11-17T00:33:43.462Z"
+  }
+]

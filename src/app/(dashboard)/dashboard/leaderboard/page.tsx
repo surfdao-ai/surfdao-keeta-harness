@@ -57,7 +57,7 @@ export default async function LeaderboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foam">Public leaderboard</h1>
-        <p className="text-foam/60 mt-1">The heat rankings. Risk-adjusted performance, consistency, and capital attraction.</p>
+        <p className="text-foam/80 mt-1">The heat rankings. Risk-adjusted performance, consistency, and capital attraction.</p>
       </div>
       <LeaderboardTable rows={rows} />
       <Disclaimer variant="short" />

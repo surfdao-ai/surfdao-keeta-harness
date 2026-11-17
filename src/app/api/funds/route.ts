@@ -16,7 +16,9 @@ export async function POST(req: Request) {
   if (!name) {
     return NextResponse.json({ error: "name required" }, { status: 400 })
   }
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")
+  let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")
+  // Always produce a valid, route-safe slug (e.g. names made only of symbols/emoji).
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) slug = `board-${Date.now().toString(36)}`
   const existing = await store.funds.findBySlug(slug)
   if (existing) {
     return NextResponse.json({ error: "A fund with that name already exists" }, { status: 409 })

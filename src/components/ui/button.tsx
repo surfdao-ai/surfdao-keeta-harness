@@ -12,7 +12,7 @@ export interface ButtonProps
 }
 
 const variantClasses = {
-  default: "bg-wave-blue text-white hover:bg-wave-blue-500 shadow-sm",
+  default: "bg-gradient-to-r from-wave-blue to-wave-blue-500 text-white shadow-md shadow-wave-blue/25 hover:shadow-lg hover:shadow-wave-blue/35 hover:brightness-110",
   destructive: "bg-sunset text-white hover:bg-sunset/90 shadow-sm",
   outline: "border border-white/20 bg-transparent text-foam hover:bg-white/5",
   secondary: "bg-seafoam/15 text-seafoam hover:bg-seafoam/25 shadow-sm",

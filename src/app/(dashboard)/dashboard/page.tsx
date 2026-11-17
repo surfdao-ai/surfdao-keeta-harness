@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-foam">Your dashboard</h1>
-        <p className="text-foam/60 mt-1">
+        <p className="text-foam/80 mt-1">
           Welcome back{session ? `, ${session.user.name ?? session.user.email}` : ""}. Your boards and sessions live here.
         </p>
       </div>
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-foam/50 mb-4">No funds yet. Shape your first board.</p>
+            <p className="text-foam/70 mb-4">No funds yet. Shape your first board.</p>
             <a href="/dashboard/funds/new" className="text-wave-blue font-medium underline underline-offset-4 hover:text-wave-blue/80 transition">Create a fund →</a>
           </div>
         )}
@@ -58,7 +58,7 @@ function StatCard({ title, value, icon, color }: { title: string; value: string 
     <div className="surfboard-card p-5">
       <div className="flex items-center gap-3 mb-3">
         <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center">{icon}</div>
-        <h3 className="text-xs font-medium text-foam/50 uppercase tracking-wider">{title}</h3>
+        <h3 className="text-xs font-medium text-foam/70 uppercase tracking-wider">{title}</h3>
       </div>
       <div className={`text-2xl font-bold ${color}`}>{value}</div>
     </div>

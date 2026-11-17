@@ -41,14 +41,14 @@ export default async function FundDetailPage({
               {fund.status.toUpperCase()}
             </Badge>
           </div>
-          <p className="text-foam/60 max-w-2xl">{fund.description}</p>
+          <p className="text-foam/80 max-w-2xl">{fund.description}</p>
         </div>
         <FundActions slug={fund.slug} fundName={fund.name} owner={!!isOwner} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="surfboard-card p-5">
-          <div className="flex items-center gap-2 text-xs font-medium text-foam/50 uppercase tracking-wider mb-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-foam/70 uppercase tracking-wider mb-3">
             <TrendingUp className="h-4 w-4" /> NAV
           </div>
           <div className="text-2xl font-bold text-foam">${Number(latest?.nav ?? 10000).toLocaleString()}</div>
@@ -57,18 +57,18 @@ export default async function FundDetailPage({
           </div>
         </div>
         <div className="surfboard-card p-5">
-          <div className="flex items-center gap-2 text-xs font-medium text-foam/50 uppercase tracking-wider mb-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-foam/70 uppercase tracking-wider mb-3">
             <DollarSign className="h-4 w-4" /> AUM
           </div>
           <div className="text-2xl font-bold text-foam">${aum.toLocaleString()}</div>
-          <div className="text-sm text-foam/50 mt-1">USDC allocated</div>
+          <div className="text-sm text-foam/70 mt-1">USDC allocated</div>
         </div>
         <div className="surfboard-card p-5">
-          <div className="flex items-center gap-2 text-xs font-medium text-foam/50 uppercase tracking-wider mb-3">
+          <div className="flex items-center gap-2 text-xs font-medium text-foam/70 uppercase tracking-wider mb-3">
             <Users className="h-4 w-4" /> Allocators
           </div>
           <div className="text-2xl font-bold text-foam">{allocations.length}</div>
-          <div className="text-sm text-foam/50 mt-1">community backers</div>
+          <div className="text-sm text-foam/70 mt-1">community backers</div>
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export default async function FundDetailPage({
         <div className="surfboard-card p-6">
           <h2 className="text-lg font-bold text-foam mb-4">Performance wave</h2>
           <WaveChart data={chartData} />
-          <p className="text-xs text-foam/40 mt-3">Simulated NAV across paper sessions.</p>
+          <p className="text-xs text-foam/60 mt-3">Simulated NAV across paper sessions.</p>
         </div>
         <div className="surfboard-card p-6">
           <h2 className="text-lg font-bold text-foam mb-4">Agent scorecard</h2>
@@ -88,7 +88,7 @@ export default async function FundDetailPage({
                 <div key={ref.id} className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-seafoam" />
                   <span className="text-sm text-foam flex-1">{persona.name}</span>
-                  <span className="text-xs text-foam/50">{ref.weight}%</span>
+                  <span className="text-xs text-foam/70">{ref.weight}%</span>
                   <span className="text-sm font-bold text-wave-blue">
                     {vote ? `${vote.score}/100` : "—"}
                   </span>
@@ -109,11 +109,11 @@ export default async function FundDetailPage({
                 <div key={s.id} className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5 text-sm">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="h-4 w-4 text-seafoam" />
-                    <span className="text-foam/70">Wave: <strong className="text-foam">{checks?.condition ?? "clear"}</strong></span>
+                    <span className="text-foam/90">Wave: <strong className="text-foam">{checks?.condition ?? "clear"}</strong></span>
                   </div>
                   <div className="text-right">
                     <div className="font-medium text-foam">${Number(s.nav).toLocaleString()}</div>
-                    <div className="text-xs text-foam/50">
+                    <div className="text-xs text-foam/70">
                       {new Date(s.timestamp).toLocaleString()}
                     </div>
                   </div>
@@ -122,7 +122,7 @@ export default async function FundDetailPage({
             })}
           </div>
         ) : (
-          <p className="text-sm text-foam/50">No sessions yet. Run an advance to start the loop.</p>
+          <p className="text-sm text-foam/70">No sessions yet. Run an advance to start the loop.</p>
         )}
       </div>
 

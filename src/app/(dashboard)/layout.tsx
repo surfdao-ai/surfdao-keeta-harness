@@ -5,13 +5,13 @@ import { useSession } from "@/components/session-provider"
 import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Flag, Compass, LogOut, Menu, Waves } from "lucide-react"
+import { LayoutDashboard, Flag, Trophy, Droplets, LogOut, Menu } from "lucide-react"
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/funds", label: "My Funds", icon: Flag },
-  { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Compass },
-  { href: "/dashboard/allocate", label: "Allocate", icon: Compass },
+  { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/dashboard/allocate", label: "Allocate", icon: Droplets },
 ] as const
 
 export default function DashboardLayout({
@@ -63,7 +63,7 @@ export default function DashboardLayout({
                 className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition lg:px-4 ${
                   active
                     ? "border border-wave-blue/40 bg-wave-blue/15 text-wave-blue"
-                    : "text-foam/70 hover:bg-white/5 hover:text-foam"
+                    : "text-foam/90 hover:bg-white/5 hover:text-foam"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
@@ -87,7 +87,7 @@ export default function DashboardLayout({
             </div>
             <div className={`min-w-0 ${collapsed ? "hidden" : "hidden lg:block"}`}>
               <div className="truncate text-sm font-medium text-foam">{user?.name ?? user?.email}</div>
-              <div className="truncate text-xs text-foam/50">{user?.keetaAddress ?? "No Keeta wallet"}</div>
+              <div className="truncate text-xs text-foam/70">{user?.keetaAddress ?? "No Keeta wallet"}</div>
             </div>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function DashboardLayout({
               <span className="text-xs font-medium text-seafoam">Paper trading • Keeta test harness</span>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/dashboard/leaderboard" className="text-xs font-medium text-foam/70 underline-offset-4 transition hover:text-foam">
+              <Link href="/dashboard/leaderboard" className="text-xs font-medium text-foam/90 underline-offset-4 transition hover:text-foam">
                 Public Leaderboard
               </Link>
               <button

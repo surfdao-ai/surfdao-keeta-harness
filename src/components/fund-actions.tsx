@@ -72,9 +72,9 @@ export default function FundActions({
         <div className="mt-4 rounded-xl border border-seafoam/30 bg-seafoam/5 p-4 text-sm text-foam">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-seafoam">Wave conditions: {result.waveCondition}</span>
-            <span className="text-foam/60">NAV ${Number(result.nav).toLocaleString()} ({Number(result.returnPct) >= 0 ? "+" : ""}{Number(result.returnPct).toFixed(2)}%)</span>
+            <span className="text-foam/80">NAV ${Number(result.nav).toLocaleString()} ({Number(result.returnPct) >= 0 ? "+" : ""}{Number(result.returnPct).toFixed(2)}%)</span>
           </div>
-          <p className="text-foam/70">{result.summary}</p>
+          <p className="text-foam/90">{result.summary}</p>
         </div>
       )}
 

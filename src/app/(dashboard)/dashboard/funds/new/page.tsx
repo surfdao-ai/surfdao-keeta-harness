@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Disclaimer from "@/components/disclaimer"
 import { AGENT_PERSONAS, DEFAULT_MANDATE, DEFAULT_RISK_CONFIG } from "@/lib/agents/personas"
-import { Flag, Wallet, ShieldCheck } from "lucide-react"
+import { Flag, Wallet, ShieldCheck, Sparkles, Check, AlertCircle } from "lucide-react"
+
+const MAX_WEIGHT = 100
 
 export default function NewFundPage() {
   const router = useRouter()
@@ -26,31 +28,54 @@ export default function NewFundPage() {
   })
 
   const totalWeight = form.agents.reduce((sum, a) => sum + a.weight, 0)
+  const weightValid = totalWeight === MAX_WEIGHT
 
-  function updateWeight(id: string, weight: number) {
-    setForm((f) => ({
-      ...f,
-      agents: f.agents.map((a) => (a.id === id ? { ...a, weight } : a)),
-    }))
+  /* Never let the combined weight exceed 100%. */
+  function updateWeight(id: string, requested: number) {
+    setForm((f) => {
+      const current = f.agents.find((a) => a.id === id)?.weight ?? 0
+      const othersTotal = f.agents.reduce((s, a) => (a.id === id ? s : s + a.weight), 0)
+      const allowed = Math.max(0, MAX_WEIGHT - othersTotal)
+      const weight = Math.min(Math.max(0, Math.round(requested)), allowed)
+      return { ...f, agents: f.agents.map((a) => (a.id === id ? { ...a, weight } : a)) }
+    })
   }
 
   function toggleAgent(id: string) {
     setForm((f) => {
       const exists = f.agents.find((a) => a.id === id)
       if (exists) return { ...f, agents: f.agents.filter((a) => a.id !== id) }
-      return { ...f, agents: [...f.agents, { id, weight: 20 }] }
+      const othersTotal = f.agents.reduce((s, a) => s + a.weight, 0)
+      if (othersTotal >= MAX_WEIGHT) {
+        toast({
+          title: "Weight limit reached",
+          description: "Lower another agent's weight before adding a new one.",
+          variant: "destructive",
+        })
+        return f
+      }
+      return { ...f, agents: [...f.agents, { id, weight: Math.min(20, MAX_WEIGHT - othersTotal) }] }
     })
   }
 
-  async function submit() {
-    if (!form.name.trim()) {
+  function nextStep() {
+    if (step === 1 && !form.name.trim()) {
       toast({ title: "Name required", description: "Give your board a name.", variant: "destructive" })
       return
     }
-    if (totalWeight !== 100) {
-      toast({ title: "Weights must sum to 100", description: `Currently ${totalWeight}%.`, variant: "destructive" })
+    if (step === 2 && !weightValid) {
+      toast({
+        title: totalWeight > MAX_WEIGHT ? "Weight over 100%" : "Weights must total 100%",
+        description: `Current total: ${totalWeight}%.`,
+        variant: "destructive",
+      })
       return
     }
+    setStep((s) => Math.min(4, s + 1))
+  }
+
+  async function submit() {
+    if (!form.name.trim() || !weightValid) return
     setLoading(true)
     try {
       const res = await fetch("/api/funds", {
@@ -69,37 +94,50 @@ export default function NewFundPage() {
           inferenceConfig: { provider: form.inferenceProvider, model: "surfdao-paper" },
         }),
       })
-      const json = await res.json()
+      const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json.error ?? "Failed to create fund")
+      if (!json.fund?.slug) throw new Error("The server returned an invalid fund. Try a different name.")
       toast({ title: "Board shaped!", description: `${form.name} is ready to ride.` })
-      router.push(`/dashboard/funds/${json.fund.slug}`)
+      router.push(`/dashboard/funds/${encodeURIComponent(json.fund.slug)}`)
       router.refresh()
     } catch (e: any) {
-      toast({ title: "Error", description: e?.message ?? "Try again", variant: "destructive" })
+      toast({ title: "Couldn't shape board", description: e?.message ?? "Please try again.", variant: "destructive" })
     } finally {
       setLoading(false)
     }
   }
 
+  const steps = ["Identity", "Agents", "Risk", "Review"]
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-7">
       <div>
-        <h1 className="text-3xl font-bold text-foam">Shape your board</h1>
-        <p className="text-foam/60 mt-1">Configure your fund, agents, and risk. You can run paper sessions immediately.</p>
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-wave-blue/30 bg-wave-blue/10 px-3 py-1 text-xs font-medium text-wave-blue">
+          <Sparkles className="h-3 w-3" /> New board
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-foam">Shape your board</h1>
+        <p className="mt-1 text-foam/80">Configure your fund, agents, and risk. You can run paper sessions immediately.</p>
       </div>
 
       {/* Step indicator */}
       <div className="flex gap-2">
-        {["Identity", "Agents", "Risk", "Review"].map((label, i) => (
-          <div key={label} className={`flex-1 h-1 rounded-full ${step >= i + 1 ? "bg-seafoam" : "bg-white/10"}`} />
+        {steps.map((label, i) => (
+          <button key={label} onClick={() => i + 1 < step && setStep(i + 1)} className="group flex-1 text-left">
+            <div className={`h-1.5 rounded-full transition-all ${step >= i + 1 ? "bg-gradient-to-r from-wave-blue to-seafoam" : "bg-white/10"}`} />
+            <span className={`mt-2 block text-xs font-medium ${step >= i + 1 ? "text-foam/90" : "text-foam/70"}`}>
+              {label}
+            </span>
+          </button>
         ))}
       </div>
 
-      <div className="surfboard-card p-6">
+      <div className="surfboard-card p-6 shadow-xl shadow-black/20 lg:p-8">
         {step === 1 && (
           <div className="space-y-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Flag className="h-5 w-5 text-wave-blue" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-wave-blue/15 text-wave-blue">
+                <Flag className="h-5 w-5" />
+              </div>
               <h2 className="text-xl font-bold text-foam">Fund identity</h2>
             </div>
             <div className="space-y-2">
@@ -116,41 +154,51 @@ export default function NewFundPage() {
                 placeholder="What's your strategy?"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="flex min-h-20 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foam placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex min-h-20 w-full rounded-xl border border-white/15 bg-ocean-900/40 px-3 py-2 text-sm text-foam placeholder:text-foam/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam/60"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foam flex items-center gap-2">
-                <Wallet className="h-4 w-4" /> Keeta wallet address <span className="text-foam/40 text-xs">(optional)</span>
+              <label className="flex items-center gap-2 text-sm font-medium text-foam">
+                <Wallet className="h-4 w-4 text-seafoam" /> Keeta wallet address
+                <span className="text-xs font-normal text-foam/80">(optional)</span>
               </label>
               <Input
                 placeholder="keeta_…"
                 value={form.keetaWalletAddress}
                 onChange={(e) => setForm({ ...form, keetaWalletAddress: e.target.value })}
               />
-              <p className="text-xs text-foam/40">You control this wallet. We never store your private keys.</p>
+              <p className="text-xs text-foam/80">You control this wallet. We never store your private keys.</p>
             </div>
           </div>
         )}
 
         {step === 2 && (
           <div className="space-y-5">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className="h-5 w-5 text-wave-blue" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-wave-blue/15 text-wave-blue">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
               <h2 className="text-xl font-bold text-foam">Agent crew</h2>
             </div>
-            <p className="text-sm text-foam/60">Select strategy-style agents and set their weights. Total must equal 100%.</p>
+            <p className="text-sm text-foam/80">
+              Select strategy-style agents and set their weights. The total is capped at 100%.
+            </p>
             <div className="space-y-2">
               {AGENT_PERSONAS.map((persona) => {
                 const selected = form.agents.find((a) => a.id === persona.id)
                 return (
-                  <div key={persona.id} className={`flex items-center gap-3 p-3 rounded-xl border transition ${selected ? "border-seafoam/40 bg-seafoam/5" : "border-white/5 bg-white/2"}`}>
-                    <button onClick={() => toggleAgent(persona.id)} className="shrink-0">
-                      <Badge variant={selected ? "success" : "outline"}>{selected ? "✓" : "+"}</Badge>
+                  <div
+                    key={persona.id}
+                    className={`flex items-center gap-3 rounded-xl border p-3 transition ${
+                      selected ? "border-seafoam/40 bg-seafoam/5" : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                    }`}
+                  >
+                    <button onClick={() => toggleAgent(persona.id)} aria-label={`Toggle ${persona.name}`} className="shrink-0">
+                      <Badge variant={selected ? "success" : "outline"}>{selected ? <Check className="h-3 w-3" /> : "+"}</Badge>
                     </button>
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-medium text-sm ${persona.color}`}>{persona.name}</div>
-                      <div className="text-xs text-foam/50">{persona.style}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className={`text-sm font-semibold ${persona.color}`}>{persona.name}</div>
+                      <div className="text-xs text-foam/65">{persona.style}</div>
                     </div>
                     {selected && (
                       <div className="flex items-center gap-2">
@@ -161,38 +209,73 @@ export default function NewFundPage() {
                           value={selected.weight}
                           onChange={(e) => updateWeight(persona.id, Number(e.target.value))}
                           className="w-24 accent-seafoam"
+                          aria-label={`${persona.name} weight`}
                         />
-                        <span className="text-sm font-medium text-foam w-8 text-right">{selected.weight}%</span>
+                        <span className="w-9 text-right text-sm font-semibold text-foam">{selected.weight}%</span>
                       </div>
                     )}
                   </div>
                 )
               })}
             </div>
-            <div className={`text-sm font-medium ${totalWeight === 100 ? "text-seafoam" : "text-sunset"}`}>
-              Total weight: {totalWeight}%
+            <div
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold ${
+                weightValid
+                  ? "border-seafoam/40 bg-seafoam/10 text-seafoam"
+                  : "border-sunset/40 bg-sunset/10 text-sunset"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                {weightValid ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                Total weight
+              </span>
+              <span>{totalWeight}% / 100%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className={`h-full rounded-full transition-all ${weightValid ? "bg-seafoam" : "bg-sunset"}`}
+                style={{ width: `${Math.min(100, totalWeight)}%` }}
+              />
             </div>
           </div>
         )}
 
         {step === 3 && (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <h2 className="text-xl font-bold text-foam">Risk parameters</h2>
-            <p className="text-sm text-foam/60">Set guardrails for your agent crew.</p>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foam">Max position size: {form.maxPositionPct}%</label>
-              <input type="range" min="5" max="50" value={form.maxPositionPct} onChange={(e) => setForm({ ...form, maxPositionPct: Number(e.target.value) })} className="w-full accent-seafoam" />
+            <p className="text-sm text-foam/80">Set guardrails for your agent crew.</p>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foam">
+                Max position size <span className="text-seafoam">{form.maxPositionPct}%</span>
+              </label>
+              <input
+                type="range"
+                min="5"
+                max="50"
+                value={form.maxPositionPct}
+                onChange={(e) => setForm({ ...form, maxPositionPct: Number(e.target.value) })}
+                className="w-full accent-seafoam"
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foam">Max drawdown: {form.maxDrawdownPct}%</label>
-              <input type="range" min="5" max="40" value={form.maxDrawdownPct} onChange={(e) => setForm({ ...form, maxDrawdownPct: Number(e.target.value) })} className="w-full accent-seafoam" />
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-foam">
+                Max drawdown <span className="text-seafoam">{form.maxDrawdownPct}%</span>
+              </label>
+              <input
+                type="range"
+                min="5"
+                max="40"
+                value={form.maxDrawdownPct}
+                onChange={(e) => setForm({ ...form, maxDrawdownPct: Number(e.target.value) })}
+                className="w-full accent-seafoam"
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foam">Inference endpoint</label>
               <select
                 value={form.inferenceProvider}
                 onChange={(e) => setForm({ ...form, inferenceProvider: e.target.value })}
-                className="flex h-9 w-full rounded-xl border border-input bg-background px-3 text-sm text-foam"
+                className="flex h-10 w-full rounded-xl border border-white/15 bg-ocean-900/40 px-3 text-sm text-foam focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-seafoam/60"
               >
                 <option value="simulated">Simulated (paper trading)</option>
                 <option value="openai">OpenAI-compatible</option>
@@ -204,14 +287,26 @@ export default function NewFundPage() {
 
         {step === 4 && (
           <div className="space-y-5">
-            <h2 className="text-xl font-bold text-foam">Review & shape</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-foam/50">Name</span><span className="text-foam font-medium">{form.name || "—"}</span></div>
-              <div className="flex justify-between"><span className="text-foam/50">Agents</span><span className="text-foam font-medium">{form.agents.length}</span></div>
-              <div className="flex justify-between"><span className="text-foam/50">Total weight</span><span className={totalWeight === 100 ? "text-seafoam font-medium" : "text-sunset font-medium"}>{totalWeight}%</span></div>
-              <div className="flex justify-between"><span className="text-foam/50">Max position</span><span className="text-foam font-medium">{form.maxPositionPct}%</span></div>
-              <div className="flex justify-between"><span className="text-foam/50">Max drawdown</span><span className="text-foam font-medium">{form.maxDrawdownPct}%</span></div>
-              <div className="flex justify-between"><span className="text-foam/50">Status</span><span className="text-seafoam font-medium">Paper</span></div>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-seafoam/15 text-seafoam">
+                <Check className="h-5 w-5" />
+              </div>
+              <h2 className="text-xl font-bold text-foam">Review &amp; shape</h2>
+            </div>
+            <div className="divide-y divide-white/10 rounded-xl border border-white/10 bg-ocean-900/30 px-4">
+              {[
+                ["Name", form.name || "—"],
+                ["Agents", `${form.agents.length}`],
+                ["Total weight", `${totalWeight}%`],
+                ["Max position", `${form.maxPositionPct}%`],
+                ["Max drawdown", `${form.maxDrawdownPct}%`],
+                ["Status", "Paper"],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between py-3 text-sm">
+                  <span className="text-foam/90">{label}</span>
+                  <span className="font-semibold text-foam">{value}</span>
+                </div>
+              ))}
             </div>
             <Disclaimer variant="short" />
           </div>
@@ -219,13 +314,13 @@ export default function NewFundPage() {
       </div>
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}>
+        <Button variant="outline" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1 || loading}>
           Back
         </Button>
         {step < 4 ? (
-          <Button onClick={() => setStep(step + 1)}>Continue</Button>
+          <Button onClick={nextStep}>Continue</Button>
         ) : (
-          <Button onClick={submit} disabled={loading || totalWeight !== 100}>
+          <Button onClick={submit} disabled={loading || !weightValid}>
             {loading ? "Shaping…" : "Shape board"}
           </Button>
         )}
