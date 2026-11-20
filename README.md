@@ -290,8 +290,10 @@ explains paper vs live and the five steps to enable real execution.
 
 **Observability & ops**
  - `GET /api/health` liveness probe (reports DB status; used by Vercel health checks).
- - `vercel.json` schedules the keeper hourly: `0 * * * *` → `POST /api/keeper/run`
-   (no-ops until `KEETA_KEEPER_SEED` is set, since no vaults exist in paper mode).
+ - `vercel.json` schedules the keeper daily at UTC midnight: `0 0 * * *` →
+   `POST /api/keeper/run` (daily is the max cadence on Hobby plans, and it is
+   sufficient for the 24h withdrawal / 7d fee timelocks). No-ops until
+   `KEETA_KEEPER_SEED` is set, since no vaults exist in paper mode.
  - Fund card return label corrected to "all time" (it was an ever-compounded
    figure, not 30d); dashboard "Latest NAV" shows "—" instead of a fabricated
    $10,000 when the user has no sessions.
