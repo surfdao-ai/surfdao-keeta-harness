@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { publicFund } from "@/lib/fund-helpers"
 import { getApiUser } from "@/lib/auth"
-import { assertSameOrigin, safeText } from "@/lib/validate"
+import { assertSameOrigin } from "@/lib/validate"
 import { normalizeInferenceConfig } from "@/lib/inference-config"
 
 export async function GET(
@@ -12,6 +12,13 @@ export async function GET(
   const { slug } = await params
   const fund = await store.funds.findBySlug(slug)
   if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
+  // Private (unpublished) funds are only readable by their owner.
+  if (!fund.isPublic) {
+    const session = await getApiUser()
+    if (session?.user.id !== fund.ownerId) {
+      return NextResponse.json({ error: "Fund not found" }, { status: 404 })
+    }
+  }
   const sessions = await store.fundSessions.byFund(fund.id)
   const allocations = await store.allocations.byFund(fund.id)
   const aum = allocations.reduce((sum, a) => sum + Number(a.amountUsdc), 0)

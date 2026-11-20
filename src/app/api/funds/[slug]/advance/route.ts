@@ -5,16 +5,21 @@ import { orchestrate } from "@/lib/agents/orchestrator"
 import { runSafetyChecks } from "@/lib/keespecs/client"
 import { getBalances } from "@/lib/keeta/client"
 import { assertSameOrigin } from "@/lib/validate"
+import { rateLimit } from "@/lib/rate-limit"
 import { getMarketSnapshot, CURATED_ASSETS } from "@/lib/assets/keeta-assets"
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params
   const session = await getApiUser()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (!assertSameOrigin(_req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
+  if (!assertSameOrigin(req)) return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
+  // Throttle advances per user: each one runs the full agent + safety pipeline.
+  if (!rateLimit(`advance:${session.user.id}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many advances. Try again in a minute." }, { status: 429 })
+  }
   const fund = await store.funds.findBySlug(slug)
   if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
   if (fund.ownerId !== session.user.id) return NextResponse.json({ error: "Not authorized" }, { status: 403 })

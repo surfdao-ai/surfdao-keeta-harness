@@ -61,7 +61,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Wave background animation */
+/* Wave background: drifting ocean glow + animated wave line at the bottom. */
 .wave-bg {
   position: relative;
   overflow: hidden;
@@ -75,8 +75,14 @@
   height: 140%;
   background: radial-gradient(circle at 20% 30%, rgba(59,130,246,0.18) 0%, transparent 55%),
               radial-gradient(circle at 80% 70%, rgba(45,212,191,0.12) 0%, transparent 50%);
+  animation: drift 18s ease-in-out infinite;
   z-index: 0;
   pointer-events: none;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -1.5%, 0) scale(1.04); }
 }
 
 @keyframes wave {
@@ -97,6 +103,36 @@
   pointer-events: none;
 }
 
+/* Second, slower wave layer for depth on hero pages. */
+.wave-stripe::after {
+  content: "";
+  position: absolute;
+  inset: -14px 0 0 0;
+  background: url("data:image/svg+xml,%3Csvg width='96' height='64' viewBox='0 0 96 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40 Q24 24 48 40 T96 40' fill='none' stroke='rgba(45,212,191,0.10)' stroke-width='3'/%3E%3C/svg%3E") repeat-x;
+  animation: wave 9s ease-in-out infinite reverse;
+}
+
+/* Entrance: fade + rise. Stagger children with .stagger > * delays. */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.55s ease both; }
+.stagger > * { animation: fadeUp 0.55s ease both; }
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 70ms; }
+.stagger > *:nth-child(3) { animation-delay: 140ms; }
+.stagger > *:nth-child(4) { animation-delay: 210ms; }
+.stagger > *:nth-child(5) { animation-delay: 280ms; }
+.stagger > *:nth-child(6) { animation-delay: 350ms; }
+
+/* Subtle glow pulse for live/active indicators. */
+@keyframes glowPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.glow-pulse { animation: glowPulse 2.2s ease-in-out infinite; }
+
 html, body {
   max-width: 100%;
   overflow-x: hidden;
@@ -105,6 +141,16 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Live-mode indicator dot (pulsing) */
+.live-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  animation: glowPulse 2.2s ease-in-out infinite;
 }
 
 /* Modern surfboard card: soft depth, glassy edge, gentle lift on hover. */

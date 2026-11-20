@@ -118,7 +118,7 @@ export async function runSafetyChecks({
   let result: KeeSpecsResult
   try {
     // Step 2: paid checks (real gateway)
-    const [status, tokenCheck, convertCheck] = await Promise.all([
+    const [status, _tokenCheck, _convertCheck] = await Promise.all([
       x402Fetch("/api/status"),
       x402Fetch("/api/token/check", { token: USDC_TOKEN_ADDRESS, address }),
       x402Fetch("/api/convert-check", { token: USDC_TOKEN_ADDRESS, amount: amountUsdc }),

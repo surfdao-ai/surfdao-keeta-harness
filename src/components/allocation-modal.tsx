@@ -17,7 +17,7 @@ type AllocationModalProps = {
 export default function AllocationModal({
   open,
   onClose,
-  fundId,
+  fundId: _fundId,
   fundName,
   onAllocate,
 }: AllocationModalProps) {

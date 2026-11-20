@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { fundStats } from "@/lib/fund-helpers"
+import { fundStats, visibleFunds, publicFund } from "@/lib/fund-helpers"
 import type { Fund, FundSession, Allocation } from "@/lib/db/schema"
 
 const baseFund: Fund = {
@@ -53,5 +53,39 @@ describe("fundStats", () => {
     ]
     expect(fundStats(baseFund, sessions, []).nav).toBe(12000)
     expect(fundStats(baseFund, [...sessions].reverse(), []).nav).toBe(12000)
+  })
+})
+
+describe("visibleFunds", () => {
+  const mine: Fund = { ...baseFund, id: "mine", ownerId: "u1", isPublic: false, slug: "mine" }
+  const myPublic: Fund = { ...baseFund, id: "mp", ownerId: "u1", isPublic: true, slug: "mp" }
+  const theirsPrivate: Fund = { ...baseFund, id: "tp", ownerId: "u2", isPublic: false, slug: "tp" }
+  const theirsPublic: Fund = { ...baseFund, id: "tpp", ownerId: "u2", isPublic: true, slug: "tpp" }
+
+  it("returns the user's own funds plus other users' public funds only", () => {
+    const visible = visibleFunds([mine, myPublic, theirsPrivate, theirsPublic], "u1").map((f) => f.id)
+    expect(visible).toContain("mine")
+    expect(visible).toContain("mp")
+    expect(visible).not.toContain("tp")
+    expect(visible).toContain("tpp")
+  })
+
+  it("does not leak another user's private fund to a different owner", () => {
+    const visible = visibleFunds([mine, theirsPrivate], "u9")
+    expect(visible).toEqual([])
+  })
+})
+
+describe("publicFund", () => {
+  it("strips the encrypted inference key from the public shape", () => {
+    const fund: Fund = {
+      ...baseFund,
+      inferenceConfig: { provider: "openai", model: "gpt-4", endpoint: "https://api.openai.com/v1", encryptedApiKey: "iv.tag.data" },
+    }
+    const pub = publicFund(fund)
+    expect((pub.inferenceConfig as any).provider).toBe("openai")
+    expect((pub.inferenceConfig as any).hasApiKey).toBe(true)
+    expect(JSON.stringify(pub)).not.toContain("iv.tag.data")
+    expect(JSON.stringify(pub)).not.toContain("encryptedApiKey")
   })
 })

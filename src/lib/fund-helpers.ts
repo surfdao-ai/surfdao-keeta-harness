@@ -29,6 +29,13 @@ export function fundStats(
 }
 
 
+/* Visibility rule for list endpoints: users only ever see their own funds
+   plus funds explicitly published. Prevents leaking private funds (and their
+   inference/mandate details) to every other signed-in account. */
+export function visibleFunds(funds: Fund[], ownerId: string): Fund[] {
+  return funds.filter((f) => f.ownerId === ownerId || f.isPublic)
+}
+
 /* Public representation of a fund: never leak encrypted inference keys. */
 export function publicFund<T extends Fund>(fund: T) {
   const cfg = (fund.inferenceConfig ?? {}) as Record<string, unknown>

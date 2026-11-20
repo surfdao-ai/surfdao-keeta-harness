@@ -12,21 +12,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many attempts. Try again shortly." }, { status: 429 })
   }
   const { email, password } = await req.json().catch(() => ({}))
-  if (!email || !password) {
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
   }
-  const user = await store.users.findByEmail(email.toLowerCase().trim())
-  if (!user) {
-    return NextResponse.json({ error: "No account found. Create one first." }, { status: 404 })
+  const normalized = email.toLowerCase().trim()
+  // Per-account limiting on top of the per-IP limit slows online guessing
+  // even when an attacker rotates IPs.
+  if (!rateLimit(`login:acct:${normalized}`, 8, 10 * 60_000)) {
+    return NextResponse.json({ error: "Too many attempts for this account. Try again in 10 minutes." }, { status: 429 })
   }
-  if (!user.passwordHash) {
-    return NextResponse.json(
-      { error: "This account needs a password. Sign up again to set one." },
-      { status: 400 },
-    )
-  }
-  if (!verifyPassword(password, user.passwordHash)) {
-    return NextResponse.json({ error: "Incorrect password" }, { status: 401 })
+  const user = await store.users.findByEmail(normalized)
+  // Uniform response whether or not the account exists: no user enumeration,
+  // and a dummy verify keeps response timing roughly constant.
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
   }
   await createSession(user.id)
   return NextResponse.json({ ok: true, user: publicUser(user) })

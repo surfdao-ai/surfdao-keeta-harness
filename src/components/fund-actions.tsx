@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button"
 import AllocationModal from "@/components/allocation-modal"
 import { Play, Wallet, RefreshCw, Globe, EyeOff } from "lucide-react"
 
-type Vote = { agentName: string; score: number; thesis: string }
-
 export default function FundActions({
   slug,
   fundName,

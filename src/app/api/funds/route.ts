@@ -4,13 +4,16 @@ import { store, rememberFund, type Fund } from "@/lib/db/schema"
 import { DEFAULT_MANDATE, DEFAULT_RISK_CONFIG } from "@/lib/agents/personas"
 import { safeText, safeJson, assertSameOrigin } from "@/lib/validate"
 import { getAssetUniverse } from "@/lib/assets/keeta-assets"
-import { publicFund } from "@/lib/fund-helpers"
+import { publicFund, visibleFunds } from "@/lib/fund-helpers"
 import { normalizeInferenceConfig } from "@/lib/inference-config"
 
 export async function GET() {
-  if (!(await getApiUser())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = await getApiUser()
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const funds = await store.funds.list()
-  return NextResponse.json({ funds: funds.map(publicFund) })
+  // Own funds + published funds only. Other users' private funds must not
+  // be enumerable (their names, mandates and configs are private).
+  return NextResponse.json({ funds: visibleFunds(funds, session.user.id).map(publicFund) })
 }
 
 export async function POST(req: Request) {

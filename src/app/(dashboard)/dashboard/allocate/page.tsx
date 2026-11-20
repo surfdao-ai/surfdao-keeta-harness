@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +27,7 @@ type Fund = {
 }
 
 export default function AllocatePage() {
-  const router = useRouter()
+
   const { toast } = useToast()
   const [funds, setFunds] = React.useState<Fund[]>([])
   const [loading, setLoading] = React.useState(true)

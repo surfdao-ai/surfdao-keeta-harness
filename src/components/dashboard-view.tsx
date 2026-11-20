@@ -70,6 +70,7 @@ export default function DashboardView({
             >
               {m === "live" ? <Zap className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
               {m === "paper" ? "Paper" : "Live"}
+              {m === "live" && liveEnabled && <span className="live-dot" aria-hidden />}
               <span className="rounded-full bg-black/25 px-2 py-0.5 text-xs">{counts[m]}</span>
             </button>
           ))}
@@ -112,7 +113,7 @@ export default function DashboardView({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <StatCard title="Funds" value={scopedFunds.length} icon={<Flag className="h-5 w-5" />} color="text-wave-blue" />
         <StatCard title="AUM attracted" value={`$${totalAum.toLocaleString()}`} icon={<DollarSign className="h-5 w-5" />} color="text-seafoam" />
-        <StatCard title="Latest NAV" value={`$${mostRecent ? Number(mostRecent.nav).toLocaleString() : "10,000"}`} icon={<TrendingUp className="h-5 w-5" />} color="text-sunset" />
+        <StatCard title="Latest NAV" value={mostRecent ? `$${Number(mostRecent.nav).toLocaleString()}` : "—"} icon={<TrendingUp className="h-5 w-5" />} color="text-sunset" />
         <StatCard title="Sessions" value={scopedSessions.length} icon={<Waves className="h-5 w-5" />} color="text-slate-300" />
       </div>
 
@@ -126,6 +127,9 @@ export default function DashboardView({
           </div>
         ) : (
           <div className="py-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-wave-blue/10 text-wave-blue">
+              <Flag className="h-6 w-6" />
+            </div>
             <p className="mb-4 text-foam/70">
               {mode === "paper"
                 ? "No paper funds yet. Shape your first board."

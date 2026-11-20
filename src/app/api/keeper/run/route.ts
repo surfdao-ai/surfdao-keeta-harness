@@ -1,20 +1,34 @@
+import { createHmac, timingSafeEqual } from "node:crypto"
 import { NextResponse } from "next/server"
 import { store } from "@/lib/db/schema"
 import { scanVaultDeposits, payWithdrawal, keeperConfigured } from "@/lib/keeta/vault"
+import { rateLimit } from "@/lib/rate-limit"
 
-/* Keeper loop. Protected by a shared secret; wire to Vercel Cron or an external
-   scheduler. Verifies on-chain deposits and pays timelocked withdrawals. */
+/* Keeper loop. Protected by a shared secret (timing-safe compare); wire to
+   Vercel Cron or an external scheduler. Verifies on-chain deposits and pays
+   timelocked withdrawals. */
 
 const TIMELOCK_MS = 24 * 60 * 60 * 1000
 
+function secretMatch(provided: string | null | undefined, expected: string | null | undefined): boolean {
+  if (!provided || !expected) return false
+  const a = createHmac("sha256", "surfdao-keeper-compare").update(provided).digest()
+  const b = createHmac("sha256", "surfdao-keeper-compare").update(expected).digest()
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
 export async function POST(req: Request) {
+  // Brute-force guard on the keeper endpoint regardless of auth.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local"
+  if (!rateLimit(`keeper:${ip}`, 20, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
   const secret = process.env.KEEPER_SECRET
   const cronSecret = process.env.CRON_SECRET
   const headerSecret = req.headers.get("x-keeper-secret")
   const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "")
   const authorized =
-    Boolean(secret && headerSecret === secret) ||
-    Boolean(cronSecret && bearer === cronSecret)
+    secretMatch(headerSecret, secret) || secretMatch(bearer, cronSecret)
   if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

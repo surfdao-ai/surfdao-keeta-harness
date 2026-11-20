@@ -22,6 +22,8 @@ export default async function FundDetailPage({
   if (!fund) notFound()
   const session = await getSession()
   const isOwner = session?.user.id === fund.ownerId
+  // Private (unpublished) funds are only visible to their owner.
+  if (!fund.isPublic && !isOwner) notFound()
   const [allSessions, allAllocations, allUsers] = await Promise.all([
     store.fundSessions.list(),
     store.allocations.list(),

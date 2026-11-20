@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Flag, TrendingUp, ShieldCheck, Wallet } from "lucide-react"
+import { TrendingUp, ShieldCheck, Wallet } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 export type FundCardProps = {
   id: string
   name: string
+  slug?: string
   description?: string | null
   owner?: string
   status?: string
@@ -18,6 +19,7 @@ export type FundCardProps = {
 
 export default function FundCard({
   name,
+  slug,
   description = "",
   owner,
   status = "paper",
@@ -27,11 +29,11 @@ export default function FundCard({
   allocators = 0,
 }: FundCardProps) {
   const isUp = totalReturn >= 0
+  const href = slug
+    ? `/dashboard/funds/${encodeURIComponent(slug)}`
+    : `/dashboard/funds/${encodeURIComponent(name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}`
   return (
-    <Link
-      href={`/dashboard/funds/${encodeURIComponent(name.toLowerCase().replace(/[^a-z0-9]+/g, "-"))}`}
-      className="group block"
-    >
+    <Link href={href} className="group block">
       <div className="surfboard-card relative overflow-hidden p-5 aspect-video">
         <div className="absolute top-4 left-4">
           <Badge variant={mode === "live" ? "destructive" : status === "live" ? "success" : "default"}>
@@ -49,7 +51,7 @@ export default function FundCard({
               <span className={`text-2xl font-bold ${isUp ? "text-seafoam" : "text-red-400"}`}>
                 {isUp ? "+" : ""}{totalReturn.toFixed(1)}%
               </span>
-              <span className="text-xs font-medium text-foam/70">30d</span>
+              <span className="text-xs font-medium text-foam/70">all time</span>
             </div>
             <TrendingUp className="h-4 w-4 fill-current" />
           </div>

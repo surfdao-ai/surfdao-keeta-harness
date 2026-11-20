@@ -12,6 +12,17 @@ export function pgEnabled(): boolean {
   return Boolean(process.env.DATABASE_URL)
 }
 
+/** Cheap liveness probe used by /api/health. */
+export async function pingDb(): Promise<boolean> {
+  try {
+    await ensureSchema()
+    await sql()`SELECT 1`
+    return true
+  } catch {
+    return false
+  }
+}
+
 function sql(): any {
   if (!_sql) _sql = neon(process.env.DATABASE_URL!)
   return _sql

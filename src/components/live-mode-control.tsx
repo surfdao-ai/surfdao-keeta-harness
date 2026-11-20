@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, ShieldAlert, Zap, X } from "lucide-react"
 
 type Check = { key: string; label: string; ok: boolean; detail: string; userAction: boolean }

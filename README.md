@@ -261,6 +261,48 @@ server-side prerequisite passes.
 The in-app **Execution mode** banner links to `/dashboard/live-mode`, a dedicated page that
 explains paper vs live and the five steps to enable real execution.
 
+## Production hardening pass (2026-11-20)
+
+**Auth & access control**
+ - **Auth gate on `/dashboard/*`**: anonymous visitors are redirected to
+   `/login` (server component in `src/app/(dashboard)/layout.tsx`), so no
+   authenticated page renders without a session. API routes independently
+   return 401.
+ - **Data-leak fix**: `/api/funds` now returns *only* the caller's own funds
+   plus published funds (previously it enumerated every fund, including other
+   users' private drafts, to any signed-in account). Private fund pages and
+   their API routes 404 for non-owners.
+ - Login responses are uniform ("Invalid email or password") — no user
+   enumeration — and a per-account rate limit (8/10 min) complements the
+   per-IP limit. Password scrypt uses OWASP-recommended cost (N=16384, r=8,
+   p=1) with uniform timing on malformed hashes.
+ - Keeper endpoint uses a **timing-safe** secret comparison plus a 20/min
+   brute-force guard; fund advances are rate-limited per user (10/min).
+
+**Transport / response hardening**
+ - `next.config.ts` sets security headers on every response: Content-Security-Policy,
+   `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`,
+   `Referrer-Policy`, `Permissions-Policy`, and `poweredByHeader: false`.
+ - **CSP note**: `script-src` must include `'unsafe-inline'` because the Next.js
+   App Router ships its RSC/flight payload as inline `<script>` tags. A
+   `'self'`-only policy blocks hydration app-wide (interactive pages go inert)
+   — this was a real regression that was fixed in this pass.
+
+**Observability & ops**
+ - `GET /api/health` liveness probe (reports DB status; used by Vercel health checks).
+ - `vercel.json` schedules the keeper hourly: `0 * * * *` → `POST /api/keeper/run`
+   (no-ops until `KEETA_KEEPER_SEED` is set, since no vaults exist in paper mode).
+ - Fund card return label corrected to "all time" (it was an ever-compounded
+   figure, not 30d); dashboard "Latest NAV" shows "—" instead of a fabricated
+   $10,000 when the user has no sessions.
+
+**UI polish**
+ - Landing page: live marketplace strip (boards, AUM, sessions, best return),
+   "Top boards this week" preview, custody/fee-model safety section, animated
+   hero.
+ - New CSS: drifting ocean glow, double wave-stripe, staggered fade-up
+   entrances, pulsing live-mode indicator; themed 404 page.
+
 ## Security & operational audit (2026-11-17)
 
 **App-level hardening applied**
@@ -291,7 +333,7 @@ explains paper vs live and the five steps to enable real execution.
 ## Verification
 
 ```bash
-npm test             # 35 Vitest unit tests (money math, validators, crypto, SSRF, readiness)
+npm test             # 41 Vitest unit tests (money math, validators, crypto, SSRF, readiness, rate limit, fund visibility)
 npx tsc --noEmit     # type check
 npm run lint         # ESLint
 npm run build        # production build

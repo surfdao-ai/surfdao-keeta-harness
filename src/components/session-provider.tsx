@@ -29,6 +29,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true)
   const router = useRouter()
   const pathname = usePathname()
+  /* Return path set by the edge proxy when it bounces an anonymous visitor
+     from /dashboard/* to /login?next=… Read once on mount; only honored when
+     it is a same-origin path (never a full URL) to prevent open redirects. */
+  const [returnPath] = React.useState<string | null>(() => {
+    try {
+      const next = new URLSearchParams(window.location.search).get("next")
+      return next && next.startsWith("/") && !next.startsWith("//") ? next : null
+    } catch {
+      return null
+    }
+  })
 
   const loadSession = React.useCallback(async () => {
     try {
@@ -48,6 +59,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     loadSession()
   }, [loadSession])
 
+  // Already signed in and landed on /login (via ?next=) — go to the return path.
+  React.useEffect(() => {
+    if (user && pathname === "/login") router.replace(returnPath ?? "/dashboard")
+  }, [user, pathname, returnPath, router])
+
   async function signIn(
     user: { email: string; password: string; name?: string },
     mode: "login" | "signup",
@@ -61,7 +77,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json.error ?? "Sign in failed")
       if (json.user) setUser(json.user)
-      router.push("/dashboard")
+      router.push(returnPath ?? "/dashboard")
       return true
     } catch (e: any) {
       throw e
