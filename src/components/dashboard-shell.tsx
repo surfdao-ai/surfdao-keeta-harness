@@ -102,16 +102,11 @@ export default function DashboardShell({
 
       <div className="relative ml-16 min-w-0 flex-1 lg:ml-60">
         <div className="sticky top-0 z-10 border-b border-white/5 bg-ocean-900/80 backdrop-blur">
-          <div className="flex h-14 items-center justify-between px-4 lg:px-6">
+          <div className="flex h-14 items-center px-4 lg:px-6">
             <div className="hidden items-center gap-4 lg:flex">
               <h1 className="text-xl font-bold tracking-tight text-foam">SurfDAO.ai</h1>
               <span className="h-5 w-px bg-white/20" />
               <span className="text-xs font-medium text-seafoam">Paper trading • Keeta test harness</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard/leaderboard" className="hidden text-xs font-medium text-foam/90 underline-offset-4 transition hover:text-foam sm:inline">
-                Public Leaderboard
-              </Link>
             </div>
           </div>
         </div>
